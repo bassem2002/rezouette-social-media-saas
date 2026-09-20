@@ -622,7 +622,7 @@ The demonstration presents the main application flows, including:
 <!-- Replace YOUR_DEMO_LINK when the video is uploaded or hosted -->
 
 <!--
-▶️ **[Watch the Rezouette Demo](YOUR_DEMO_LINK)**
+▶️ **[Watch the Rezouette Demo]([YOUR_DEMO_LINK](https://drive.google.com/file/d/1sUsT_SoCW7xMoSCSIlbmOnX9BkbYMIC6/view?usp=sharing))**
 -->
 
 ---
