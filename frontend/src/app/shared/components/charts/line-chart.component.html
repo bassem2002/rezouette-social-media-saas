@@ -1,0 +1,60 @@
+<div [class]="containerClasses()">
+  <div class="flex gap-2">
+    <!-- Graduations verticales -->
+    <ul class="flex w-8 shrink-0 flex-col justify-between text-right text-[10px] text-subtle">
+      @for (tick of ticks(); track tick.ratio) {
+        <li>{{ tick.value }}</li>
+      }
+    </ul>
+
+    <div [class]="plotClasses()">
+      <!-- Lignes de repère horizontales -->
+      <div class="absolute inset-0 flex flex-col justify-between">
+        @for (tick of ticks(); track tick.ratio) {
+          <div class="h-px w-full bg-border-soft"></div>
+        }
+      </div>
+
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        class="relative size-full"
+        role="img"
+        [attr.aria-label]="'Courbes — ' + summary()"
+      >
+        @for (line of lines(); track line.key) {
+          <polyline
+            [attr.points]="line.points"
+            fill="none"
+            [attr.stroke]="line.color"
+            stroke-width="0.8"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            vector-effect="non-scaling-stroke"
+          />
+        }
+      </svg>
+    </div>
+  </div>
+
+  <div class="ml-10 mt-2 flex gap-1">
+    @for (point of points(); track $index) {
+      <div class="min-w-0 flex-1 truncate text-center text-[10px] text-subtle">
+        {{ showLabel($index) ? point.label : '' }}
+      </div>
+    }
+  </div>
+
+  <ul class="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+    @for (s of series(); track s.key) {
+      <li class="flex items-center gap-1.5 text-xs text-muted">
+        <span
+          aria-hidden="true"
+          class="h-0.5 w-4 rounded-full"
+          [style.background-color]="s.color"
+        ></span>
+        {{ s.label }}
+      </li>
+    }
+  </ul>
+</div>

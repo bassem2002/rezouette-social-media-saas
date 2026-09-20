@@ -1,0 +1,223 @@
+<section
+  [formGroup]="form()"
+  class="space-y-4 rounded-xl border border-border bg-card p-4"
+  aria-labelledby="youtube-options-title"
+>
+  <div class="flex items-center gap-2">
+    <app-platform-icon platform="youtube" className="size-4 text-error" />
+    <h3 id="youtube-options-title" class="text-sm font-semibold text-foreground">
+      Options YouTube
+    </h3>
+  </div>
+
+  @if (notConfigured()) {
+    <p class="text-sm text-muted" role="status">
+      YouTube n’est pas configuré sur ce serveur.
+    </p>
+  } @else if (loading()) {
+    <p class="text-sm text-muted" role="status">Chargement des chaînes…</p>
+  } @else if (!hasChannels()) {
+    <p class="text-sm text-muted" role="status">
+      Aucune chaîne YouTube connectée. Ajoutez-en une depuis la page
+      « Comptes connectés ».
+    </p>
+  } @else {
+    <!-- Chaîne cible ------------------------------------------------------ -->
+    <div>
+      <app-label htmlFor="youtube-account">Chaîne YouTube</app-label>
+      <select
+        id="youtube-account"
+        appSelect
+        formControlName="youtubeAccountId"
+        [attr.aria-invalid]="errors().youtubeAccountId ? 'true' : null"
+        [attr.aria-describedby]="errors().youtubeAccountId ? 'youtube-account-error' : null"
+      >
+        @if (needsExplicitChoice()) {
+          <option value="">Choisissez une chaîne…</option>
+        }
+        @for (channel of channels(); track channel.id) {
+          <option [value]="channel.id" [disabled]="channel.disabled">
+            {{ channel.name }}{{ channel.subtitle ? ' — ' + channel.subtitle : '' }}
+            {{ channel.disabled ? ' (reconnexion requise)' : '' }}
+          </option>
+        }
+      </select>
+      @if (errors().youtubeAccountId) {
+        <p id="youtube-account-error" class="mt-1.5 text-sm text-error" role="alert">
+          {{ errors().youtubeAccountId }}
+        </p>
+      }
+      @if (selectedWarning()) {
+        <p class="mt-1.5 text-sm text-warning" role="status">{{ selectedWarning() }}</p>
+      }
+    </div>
+
+    <!-- Titre ------------------------------------------------------------- -->
+    <div>
+      <app-label htmlFor="youtube-title">Titre de la vidéo</app-label>
+      <input
+        id="youtube-title"
+        appInput
+        type="text"
+        formControlName="youtubeTitle"
+        placeholder="Titre affiché sur YouTube"
+        [attr.maxlength]="TITLE_MAX"
+        [attr.aria-invalid]="errors().youtubeTitle ? 'true' : null"
+        [attr.aria-describedby]="errors().youtubeTitle ? 'youtube-title-error' : 'youtube-title-count'"
+      />
+      <p id="youtube-title-count" class="mt-1 text-right text-xs tabular-nums text-muted">
+        {{ titleLength() }} / {{ TITLE_MAX }}
+      </p>
+      @if (errors().youtubeTitle) {
+        <p id="youtube-title-error" class="text-sm text-error" role="alert">
+          {{ errors().youtubeTitle }}
+        </p>
+      }
+    </div>
+
+    <!-- Description ------------------------------------------------------- -->
+    <div>
+      <app-label htmlFor="youtube-description">Description (optionnelle)</app-label>
+      <textarea
+        id="youtube-description"
+        appTextarea
+        rows="3"
+        formControlName="youtubeDescription"
+        placeholder="Décrivez votre vidéo…"
+        [attr.aria-invalid]="errors().youtubeDescription ? 'true' : null"
+        [attr.aria-describedby]="errors().youtubeDescription ? 'youtube-description-error' : 'youtube-description-count'"
+      ></textarea>
+      <p
+        id="youtube-description-count"
+        class="mt-1 text-right text-xs tabular-nums text-muted"
+      >
+        {{ descriptionLength() }} / {{ DESCRIPTION_MAX }}
+      </p>
+      @if (errors().youtubeDescription) {
+        <p id="youtube-description-error" class="text-sm text-error" role="alert">
+          {{ errors().youtubeDescription }}
+        </p>
+      }
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <!-- Confidentialité -------------------------------------------------- -->
+      <div>
+        <app-label htmlFor="youtube-privacy">Confidentialité</app-label>
+        <select id="youtube-privacy" appSelect formControlName="youtubePrivacyStatus">
+          @for (status of privacyStatuses; track status) {
+            <option [value]="status">{{ privacyLabel(status) }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Catégorie -------------------------------------------------------- -->
+      <div>
+        <app-label htmlFor="youtube-category">Catégorie YouTube (optionnelle)</app-label>
+        <input
+          id="youtube-category"
+          appInput
+          type="text"
+          inputmode="numeric"
+          formControlName="youtubeCategoryId"
+          placeholder="ex. 22"
+          aria-describedby="youtube-category-hint"
+        />
+        <p id="youtube-category-hint" class="mt-1 text-xs text-muted">
+          Identifiant numérique de catégorie YouTube.
+        </p>
+      </div>
+    </div>
+
+    <!-- Tags -------------------------------------------------------------- -->
+    <div>
+      <app-label htmlFor="youtube-tags">Tags (optionnels)</app-label>
+      <input
+        id="youtube-tags"
+        appInput
+        type="text"
+        formControlName="youtubeTags"
+        placeholder="rezouette, saas, tutoriel"
+        aria-describedby="youtube-tags-hint"
+      />
+      <p id="youtube-tags-hint" class="mt-1 text-xs text-muted">
+        Séparés par des virgules. Les doublons et espaces superflus sont retirés.
+      </p>
+    </div>
+
+    <!-- Déclaration COPPA : radios, PAS de case à cocher ------------------- -->
+    <fieldset
+      class="rounded-xl border border-border p-3"
+      [attr.aria-invalid]="errors().youtubeMadeForKids ? 'true' : null"
+      [attr.aria-describedby]="errors().youtubeMadeForKids ? 'youtube-kids-error' : 'youtube-kids-hint'"
+    >
+      <legend class="px-1 text-sm font-medium text-foreground">
+        Ce contenu est-il destiné aux enfants ?
+      </legend>
+      <p id="youtube-kids-hint" class="mb-2 text-xs text-muted">
+        Déclaration obligatoire exigée par YouTube (loi COPPA). Aucune valeur
+        n’est présélectionnée : vous devez répondre explicitement.
+      </p>
+      <div class="flex flex-col gap-2 sm:flex-row sm:gap-6">
+        <label class="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="radio"
+            name="youtubeMadeForKids"
+            formControlName="youtubeMadeForKids"
+            [value]="true"
+            class="size-4 accent-primary"
+          />
+          Oui, destiné aux enfants
+        </label>
+        <label class="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="radio"
+            name="youtubeMadeForKids"
+            formControlName="youtubeMadeForKids"
+            [value]="false"
+            class="size-4 accent-primary"
+          />
+          Non, pas destiné aux enfants
+        </label>
+      </div>
+      @if (errors().youtubeMadeForKids) {
+        <p id="youtube-kids-error" class="mt-2 text-sm text-error" role="alert">
+          {{ errors().youtubeMadeForKids }}
+        </p>
+      }
+    </fieldset>
+
+    <!-- Déclarations complémentaires -------------------------------------- -->
+    <div class="space-y-2">
+      <label class="flex items-center gap-2 text-sm text-foreground">
+        <input
+          type="checkbox"
+          formControlName="youtubeContainsSyntheticMedia"
+          class="size-4 accent-primary"
+        />
+        La vidéo contient du contenu synthétique ou altéré
+      </label>
+      <label class="flex items-center gap-2 text-sm text-foreground">
+        <input
+          type="checkbox"
+          formControlName="youtubeNotifySubscribers"
+          class="size-4 accent-primary"
+        />
+        Notifier les abonnés de la chaîne
+      </label>
+    </div>
+
+    @if (mode() === 'schedule') {
+      <p class="rounded-lg bg-muted-soft px-3 py-2 text-xs text-muted" role="note">
+        Pour YouTube, la date choisie correspond au <strong>début de l’envoi</strong>.
+        La vidéo peut devenir visible plus tard, une fois son traitement terminé
+        par YouTube.
+      </p>
+    } @else {
+      <p class="rounded-lg bg-muted-soft px-3 py-2 text-xs text-muted" role="note">
+        Après l’envoi, YouTube traite la vidéo pendant quelques minutes : elle
+        apparaîtra comme « traitement en cours » dans l’historique.
+      </p>
+    }
+  }
+</section>

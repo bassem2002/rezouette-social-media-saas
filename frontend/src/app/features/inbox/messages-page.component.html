@@ -1,0 +1,118 @@
+<div class="space-y-4">
+  <app-frontend-preview-notice />
+
+  <app-inbox-split-layout
+    [detailOpen]="selectedId() !== null"
+    listLabel="Conversations"
+    detailLabel="Messages de la conversation"
+    (back)="selectedId.set(null)"
+  >
+    <!-- ── Panneau liste ─────────────────────────────────────────────────── -->
+    <div inboxList class="flex h-full flex-col">
+      <div class="flex items-center justify-between gap-2 px-4 pb-3 pt-4">
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-semibold tracking-tight text-foreground">
+            Messages
+          </h1>
+          <app-preview-badge />
+        </div>
+        <button
+          type="button"
+          (click)="compose()"
+          aria-label="Nouveau message"
+          class="inline-flex size-9 items-center justify-center rounded-md text-muted transition-colors duration-150 hover:bg-muted-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <lucide-icon [img]="ComposeIcon" class="size-4" />
+        </button>
+      </div>
+
+      <div class="flex flex-wrap gap-2 px-4">
+        <app-filter-select
+          controlId="messages-platform"
+          label="Plateforme"
+          [options]="platformOptions"
+          [value]="platform()"
+          (valueChange)="platform.set($event)"
+          className="w-[144px]"
+        />
+        <app-filter-select
+          controlId="messages-profile"
+          label="Profil"
+          [options]="profileOptions"
+          [value]="profile()"
+          (valueChange)="profile.set($event)"
+          className="w-[132px]"
+        />
+        <app-filter-select
+          controlId="messages-account"
+          label="Compte"
+          [options]="accountOptions"
+          [value]="account()"
+          (valueChange)="account.set($event)"
+          className="w-[140px]"
+        />
+      </div>
+
+      <div class="px-4 py-3">
+        <app-search-bar
+          [value]="search()"
+          (valueChange)="search.set($event)"
+          placeholder="Search messages…"
+          ariaLabel="Rechercher un message"
+        />
+      </div>
+
+      <div
+        class="flex items-center justify-between gap-2 border-y border-border px-4 py-3"
+      >
+        <h2 class="text-base font-semibold text-foreground">Conversations</h2>
+        <app-filter-select
+          controlId="messages-sort"
+          label="Tri"
+          [options]="sortOptions"
+          [value]="sort()"
+          (valueChange)="sort.set($event)"
+          className="w-[140px]"
+        />
+      </div>
+
+      @if (hasConversations()) {
+        <ul class="min-h-0 flex-1 divide-y divide-border-soft overflow-y-auto">
+          @for (conversation of conversations(); track conversation.id) {
+            <li>
+              <button
+                type="button"
+                (click)="selectedId.set(conversation.id)"
+                [attr.aria-current]="selectedId() === conversation.id ? 'true' : null"
+                class="w-full px-4 py-3 text-left transition-colors duration-150 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span class="block truncate text-sm font-medium text-foreground">
+                  {{ conversation.contact }}
+                </span>
+                <span class="block truncate text-xs text-muted">
+                  {{ conversation.lastMessage }}
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="flex-1 px-4 py-10 text-center text-sm text-muted">
+          No conversations found
+        </p>
+      }
+    </div>
+
+    <!-- ── Panneau détail ────────────────────────────────────────────────── -->
+    <div inboxDetail class="flex h-full flex-col">
+      <div class="border-b border-border px-5 py-4">
+        <h2 class="text-base font-semibold text-foreground">
+          Select a conversation
+        </h2>
+      </div>
+      <div class="flex flex-1 items-center justify-center p-8 text-center">
+        <p class="text-sm text-muted">Select a conversation to view messages</p>
+      </div>
+    </div>
+  </app-inbox-split-layout>
+</div>

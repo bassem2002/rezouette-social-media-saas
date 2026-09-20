@@ -1,0 +1,401 @@
+<div class="space-y-5">
+  <!-- Sous-navigation des campagnes -->
+  <div class="flex gap-1 border-b border-border" role="tablist" aria-label="Campagnes">
+    @for (item of tabs; track item.id) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="tab() === item.id"
+        (click)="setTab(item.id)"
+        class="-mb-px border-b-2 px-3 py-2.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        [class]="
+          tab() === item.id
+            ? 'border-foreground text-foreground'
+            : 'border-transparent text-muted hover:text-foreground'
+        "
+      >
+        {{ item.label }}
+      </button>
+    }
+  </div>
+
+  <!-- ══ Broadcasts ══════════════════════════════════════════════════════ -->
+  @if (tab() === 'broadcasts') {
+    <app-page-header
+      title="Broadcasts"
+      description="Send bulk messages across any platform"
+    >
+      <app-preview-badge titleBadge />
+      <div pageActions class="flex items-center gap-2">
+        <app-button
+          size="sm"
+          className="rounded-md"
+          ariaHasPopup="dialog"
+          ariaControls="broadcast-drawer"
+          [ariaExpanded]="broadcastOpen()"
+          (click)="openBroadcast()"
+        >
+          <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+          New Broadcast
+        </app-button>
+      </div>
+    </app-page-header>
+
+    <app-frontend-preview-notice />
+
+    <div class="flex flex-wrap items-center gap-2">
+      <app-search-bar
+        [value]="search()"
+        (valueChange)="search.set($event)"
+        placeholder="Search broadcasts…"
+        ariaLabel="Rechercher un broadcast"
+        className="w-full sm:w-[260px]"
+      />
+      <div class="ml-auto flex flex-wrap gap-2">
+        <app-filter-select
+          controlId="broadcast-status"
+          label="Statut"
+          [options]="statusOptions"
+          [value]="status()"
+          (valueChange)="status.set($event)"
+          className="w-[148px]"
+        />
+        <app-filter-select
+          controlId="broadcast-platform"
+          label="Plateforme"
+          [options]="platformOptions"
+          [value]="platform()"
+          (valueChange)="platform.set($event)"
+          className="w-[148px]"
+        />
+      </div>
+    </div>
+
+    <div class="overflow-hidden rounded-xl border border-border bg-surface">
+      <table class="w-full border-collapse text-sm">
+        <caption class="sr-only">Broadcasts — aperçu frontend</caption>
+        <thead>
+          <tr class="border-b border-border bg-card">
+            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Name</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Account</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Message</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Delivery</th>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of broadcasts(); track row.id) {
+            <tr class="border-b border-border last:border-0">
+              <td class="px-4 py-3 text-foreground">{{ row.name }}</td>
+              <td class="px-4 py-3 text-muted">{{ row.account }}</td>
+              <td class="px-4 py-3 text-muted">{{ row.message }}</td>
+              <td class="px-4 py-3 text-muted">{{ row.delivery }}</td>
+              <td class="px-4 py-3 text-muted">{{ row.date }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-4 py-16 text-center">
+                <span class="mx-auto flex size-12 items-center justify-center rounded-full bg-card text-subtle">
+                  <lucide-icon [img]="BroadcastIcon" class="size-6" aria-hidden="true" />
+                </span>
+                <p class="mt-3 text-sm font-medium text-foreground">
+                  No broadcasts yet.
+                </p>
+                <div class="mt-3">
+                  <app-button className="rounded-md" (click)="openBroadcast()">
+                    <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+                    Create Broadcast
+                  </app-button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- ══ Sequences ═══════════════════════════════════════════════════════ -->
+  @if (tab() === 'sequences') {
+    <app-page-header
+      title="Sequences"
+      description="Build automated messaging sequences"
+    >
+      <app-preview-badge titleBadge />
+      <div pageActions class="flex items-center gap-2">
+        <app-button
+          size="sm"
+          className="rounded-md"
+          ariaHasPopup="dialog"
+          ariaControls="sequence-drawer"
+          [ariaExpanded]="sequenceOpen()"
+          (click)="openSequence()"
+        >
+          <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+          Create sequence
+        </app-button>
+      </div>
+    </app-page-header>
+
+    <app-frontend-preview-notice />
+
+    @if (!hasSequences()) {
+      <div class="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-surface px-6 py-16 text-center">
+        <span class="flex size-14 items-center justify-center rounded-full bg-card text-subtle">
+          <lucide-icon [img]="SequenceIcon" class="size-6" aria-hidden="true" />
+        </span>
+        <p class="text-base font-semibold text-foreground">No sequences yet</p>
+        <app-button className="rounded-md" (click)="openSequence()">
+          <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+          Create sequence
+        </app-button>
+      </div>
+    }
+  }
+
+  <!-- ══ Comment-to-DM ═══════════════════════════════════════════════════ -->
+  @if (tab() === 'comment-to-dm') {
+    <app-page-header
+      title="Comment-to-DM"
+      description="Automatically reply to comments with direct messages"
+    >
+      <app-preview-badge titleBadge />
+      <div pageActions class="flex items-center gap-2">
+        <app-button
+          size="sm"
+          className="rounded-md"
+          ariaHasPopup="dialog"
+          ariaControls="automation-drawer"
+          [ariaExpanded]="automationOpen()"
+          (click)="openAutomation()"
+        >
+          <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+          Create automation
+        </app-button>
+      </div>
+    </app-page-header>
+
+    <app-frontend-preview-notice />
+
+    @if (!hasAutomations()) {
+      <div class="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-surface px-6 py-16 text-center">
+        <span class="flex size-14 items-center justify-center rounded-full bg-card text-subtle">
+          <lucide-icon [img]="CommentIcon" class="size-6" aria-hidden="true" />
+        </span>
+        <p class="text-base font-semibold text-foreground">
+          No Comment-to-DM automations yet
+        </p>
+        <p class="max-w-sm text-sm text-muted">
+          Aucun commentaire ne sera surveillé et aucun message ne sera envoyé
+          tant que le service Campaigns n’est pas connecté.
+        </p>
+        <app-button className="rounded-md" (click)="openAutomation()">
+          <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+          Create automation
+        </app-button>
+      </div>
+    }
+  }
+
+  <!-- ══ Drawer : nouveau broadcast ══════════════════════════════════════ -->
+  <app-drawer
+    [open]="broadcastOpen()"
+    panelId="broadcast-drawer"
+    title="New Broadcast"
+    description="Send a bulk message — aperçu frontend"
+    maxWidthClass="max-w-[540px]"
+    (close)="broadcastOpen.set(false)"
+  >
+    <form [formGroup]="broadcastForm" (ngSubmit)="submitBroadcast()" class="space-y-4">
+      <div>
+        <app-label htmlFor="broadcast-name" [required]="true">Name</app-label>
+        <input
+          id="broadcast-name"
+          appInput
+          formControlName="name"
+          placeholder="Annonce de rentrée"
+          [invalid]="submitAttempted() && broadcastForm.controls.name.invalid"
+        />
+        @if (submitAttempted() && broadcastForm.controls.name.invalid) {
+          <p class="mt-1.5 text-sm text-error" role="alert">
+            Indiquez un nom (80 caractères maximum).
+          </p>
+        }
+      </div>
+
+      <div>
+        <app-label htmlFor="broadcast-platform">Platform</app-label>
+        <div class="relative">
+          <select id="broadcast-platform" appSelect formControlName="platform">
+            @for (option of platformOptions; track option.value) {
+              @if (option.value !== 'all') {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            }
+          </select>
+          <lucide-icon
+            [img]="ChevronDownIcon"
+            class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+
+      <div>
+        <app-label htmlFor="broadcast-message" [required]="true">Message</app-label>
+        <textarea
+          id="broadcast-message"
+          appTextarea
+          rows="5"
+          formControlName="message"
+          placeholder="Votre message…"
+          [invalid]="submitAttempted() && broadcastForm.controls.message.invalid"
+        ></textarea>
+        @if (submitAttempted() && broadcastForm.controls.message.invalid) {
+          <p class="mt-1.5 text-sm text-error" role="alert">
+            Rédigez un message (1000 caractères maximum).
+          </p>
+        }
+      </div>
+
+      <p class="rounded-lg border border-[#ffd9cf] bg-primary-soft px-3 py-2.5 text-[13px] text-foreground">
+        Aucun message ne sera envoyé : ce formulaire est un aperçu.
+      </p>
+    </form>
+
+    <div drawerFooter class="contents">
+      <app-button variant="secondary" (click)="broadcastOpen.set(false)">Cancel</app-button>
+      <app-button (click)="submitBroadcast()">Create Broadcast</app-button>
+    </div>
+  </app-drawer>
+
+  <!-- ══ Drawer : nouvelle séquence ══════════════════════════════════════ -->
+  <app-drawer
+    [open]="sequenceOpen()"
+    panelId="sequence-drawer"
+    title="New sequence"
+    description="Build an automated messaging sequence — aperçu frontend"
+    maxWidthClass="max-w-[540px]"
+    (close)="sequenceOpen.set(false)"
+  >
+    <form [formGroup]="sequenceForm" (ngSubmit)="submitSequence()" class="space-y-4">
+      <div>
+        <app-label htmlFor="sequence-name" [required]="true">Name</app-label>
+        <input
+          id="sequence-name"
+          appInput
+          formControlName="name"
+          placeholder="Bienvenue en 3 messages"
+          [invalid]="submitAttempted() && sequenceForm.controls.name.invalid"
+        />
+        @if (submitAttempted() && sequenceForm.controls.name.invalid) {
+          <p class="mt-1.5 text-sm text-error" role="alert">
+            Indiquez un nom (80 caractères maximum).
+          </p>
+        }
+      </div>
+
+      <div>
+        <app-label htmlFor="sequence-delay">Délai entre deux messages (heures)</app-label>
+        <input
+          id="sequence-delay"
+          appInput
+          type="number"
+          min="1"
+          formControlName="delayHours"
+        />
+      </div>
+
+      <p class="rounded-lg border border-[#ffd9cf] bg-primary-soft px-3 py-2.5 text-[13px] text-foreground">
+        Aucune automatisation ne sera créée côté serveur.
+      </p>
+    </form>
+
+    <div drawerFooter class="contents">
+      <app-button variant="secondary" (click)="sequenceOpen.set(false)">Cancel</app-button>
+      <app-button (click)="submitSequence()">Create sequence</app-button>
+    </div>
+  </app-drawer>
+
+  <!-- ══ Drawer : Comment-to-DM ══════════════════════════════════════════ -->
+  <app-drawer
+    [open]="automationOpen()"
+    panelId="automation-drawer"
+    title="New automation"
+    description="Reply to comments with a direct message — aperçu frontend"
+    maxWidthClass="max-w-[540px]"
+    (close)="automationOpen.set(false)"
+  >
+    <form [formGroup]="automationForm" (ngSubmit)="submitAutomation()" class="space-y-4">
+      <div>
+        <app-label htmlFor="automation-platform">Platform</app-label>
+        <div class="relative">
+          <select id="automation-platform" appSelect formControlName="platform">
+            @for (option of platformOptions; track option.value) {
+              @if (option.value !== 'all') {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            }
+          </select>
+          <lucide-icon
+            [img]="ChevronDownIcon"
+            class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+
+      <div>
+        <app-label htmlFor="automation-post">Publication ciblée</app-label>
+        <input
+          id="automation-post"
+          appInput
+          formControlName="postReference"
+          placeholder="Titre ou référence de la publication"
+        />
+      </div>
+
+      <div>
+        <app-label htmlFor="automation-keyword" [required]="true">Mot-clé</app-label>
+        <input
+          id="automation-keyword"
+          appInput
+          formControlName="keyword"
+          placeholder="INFO"
+          [invalid]="submitAttempted() && automationForm.controls.keyword.invalid"
+        />
+        @if (submitAttempted() && automationForm.controls.keyword.invalid) {
+          <p class="mt-1.5 text-sm text-error" role="alert">
+            Indiquez un mot-clé (40 caractères maximum).
+          </p>
+        }
+      </div>
+
+      <div>
+        <app-label htmlFor="automation-reply" [required]="true">Message de réponse</app-label>
+        <textarea
+          id="automation-reply"
+          appTextarea
+          rows="4"
+          formControlName="reply"
+          placeholder="Merci ! Voici le lien…"
+          [invalid]="submitAttempted() && automationForm.controls.reply.invalid"
+        ></textarea>
+        @if (submitAttempted() && automationForm.controls.reply.invalid) {
+          <p class="mt-1.5 text-sm text-error" role="alert">
+            Rédigez une réponse (500 caractères maximum).
+          </p>
+        }
+      </div>
+
+      <p class="rounded-lg border border-[#ffd9cf] bg-primary-soft px-3 py-2.5 text-[13px] text-foreground">
+        Aucun commentaire ne sera surveillé et aucun message ne sera envoyé.
+      </p>
+    </form>
+
+    <div drawerFooter class="contents">
+      <app-button variant="secondary" (click)="automationOpen.set(false)">Cancel</app-button>
+      <app-button (click)="submitAutomation()">Create automation</app-button>
+    </div>
+  </app-drawer>
+</div>

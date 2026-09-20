@@ -1,0 +1,218 @@
+<!-- Desktop : colonne fixe de 304 px, séparée par une bordure d'un pixel. -->
+<aside
+  class="fixed inset-y-0 left-0 z-30 hidden w-[var(--rz-sidebar-width)] border-r border-border bg-sidebar lg:block"
+  [attr.aria-label]="brand.name"
+>
+  <ng-container [ngTemplateOutlet]="content" />
+</aside>
+
+<!-- Mobile / tablette : tiroir superposé, fermé par défaut. -->
+@if (mobileOpen()) {
+  <div class="fixed inset-0 z-40 lg:hidden">
+    <div
+      class="absolute inset-0 bg-foreground/25"
+      (click)="close.emit()"
+      aria-hidden="true"
+    ></div>
+    <aside
+      class="animate-fade-in absolute inset-y-0 left-0 w-[min(304px,85vw)] border-r border-border bg-sidebar shadow-raised"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="brand.name"
+    >
+      <button
+        type="button"
+        (click)="close.emit()"
+        aria-label="Fermer le menu"
+        class="absolute right-3 top-4 rounded-md p-1.5 text-muted transition-colors duration-150 hover:bg-muted-soft hover:text-foreground"
+      >
+        <lucide-icon [img]="XIcon" class="size-4" />
+      </button>
+      <ng-container
+        [ngTemplateOutlet]="content"
+        [ngTemplateOutletContext]="{ mobile: true }"
+      />
+    </aside>
+  </div>
+}
+
+<ng-template #content let-mobile="mobile">
+  <div class="flex h-full w-full flex-col">
+    <!-- Bloc utilisateur — nom et email RÉELS quand ils sont disponibles ;
+         aucune valeur n'est inventée si le profil n'est pas chargé. -->
+    <button
+      type="button"
+      (click)="mobile ? close.emit() : null"
+      routerLink="/settings"
+      class="flex w-full items-center gap-3 px-5 py-6 text-left transition-colors duration-150 hover:bg-muted-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+      aria-label="Profil et paramètres"
+    >
+      <span
+        class="flex size-[42px] shrink-0 items-center justify-center rounded-md bg-primary-soft text-sm font-semibold text-primary"
+        aria-hidden="true"
+      >
+        {{ initials() }}
+      </span>
+      <span class="min-w-0 flex-1">
+        <span class="block truncate text-sm font-semibold text-foreground">
+          {{ userName() || brand.name }}
+        </span>
+        @if (userEmail()) {
+          <span class="block overflow-hidden text-ellipsis whitespace-nowrap text-xs text-muted">
+            {{ userEmail() }}
+          </span>
+        }
+      </span>
+      <lucide-icon
+        [img]="ChevronsUpDownIcon"
+        class="size-4 shrink-0 text-subtle"
+        aria-hidden="true"
+      />
+    </button>
+
+    <!-- Section Settings : la colonne bascule sur ses propres entrées, avec un
+         retour explicite vers le menu principal. -->
+    @if (inSettings()) {
+      <nav
+        aria-label="Navigation des paramètres"
+        class="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-[14px] pb-2"
+      >
+        <a
+          routerLink="/dashboard"
+          (click)="mobile ? close.emit() : null"
+          class="mb-2 flex h-10 items-center gap-2 rounded-md px-3 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-muted-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <lucide-icon [img]="BackIcon" class="size-4 text-muted" aria-hidden="true" />
+          Settings
+        </a>
+
+        @for (item of settingsNavItems; track item.to) {
+          <a
+            [routerLink]="item.to"
+            routerLinkActive
+            #settingsRla="routerLinkActive"
+            [attr.aria-current]="settingsRla.isActive ? 'page' : null"
+            (click)="mobile ? close.emit() : null"
+            [class]="settingsLinkClasses(item, settingsRla.isActive)"
+          >
+            <span class="flex-1 truncate">{{ item.label }}</span>
+            @if (item.external) {
+              <lucide-icon
+                [img]="ArrowUpRightIcon"
+                class="size-3.5 text-subtle"
+                aria-hidden="true"
+              />
+            }
+          </a>
+        }
+      </nav>
+    } @else {
+    <nav
+      aria-label="Navigation principale"
+      class="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-[14px] pb-2"
+    >
+      @for (entry of navEntries; track entry.kind === 'group' ? entry.id : entry.to) {
+        @if (entry.kind === 'link') {
+          <a
+            [routerLink]="entry.to"
+            routerLinkActive
+            #rla="routerLinkActive"
+            [routerLinkActiveOptions]="{ exact: !!entry.end }"
+            [attr.aria-current]="rla.isActive ? 'page' : null"
+            (click)="mobile ? close.emit() : null"
+            [class]="linkClasses(rla.isActive)"
+          >
+            <lucide-icon
+              [img]="entry.icon"
+              [class]="iconClasses(rla.isActive)"
+              aria-hidden="true"
+            />
+            <span class="truncate">{{ entry.label }}</span>
+          </a>
+        } @else {
+          <button
+            type="button"
+            (click)="toggleGroup(entry)"
+            [attr.aria-expanded]="isExpanded(entry)"
+            [attr.aria-controls]="'nav-group-' + entry.id"
+            [class]="linkClasses(isGroupActive(entry)) + ' w-full'"
+          >
+            <lucide-icon
+              [img]="entry.icon"
+              [class]="iconClasses(isGroupActive(entry))"
+              aria-hidden="true"
+            />
+            <span class="flex-1 truncate text-left">{{ entry.label }}</span>
+            <lucide-icon
+              [img]="ChevronRightIcon"
+              class="size-4 shrink-0 text-subtle transition-transform duration-150"
+              [class.rotate-90]="isExpanded(entry)"
+              aria-hidden="true"
+            />
+          </button>
+
+          @if (isExpanded(entry)) {
+            <div [id]="'nav-group-' + entry.id" class="space-y-0.5">
+              @for (child of entry.children; track child.to) {
+                <a
+                  [routerLink]="child.to"
+                  routerLinkActive
+                  #childRla="routerLinkActive"
+                  [attr.aria-current]="childRla.isActive ? 'page' : null"
+                  (click)="mobile ? close.emit() : null"
+                  [class]="linkClasses(childRla.isActive, true)"
+                >
+                  <lucide-icon
+                    [img]="child.icon"
+                    [class]="iconClasses(childRla.isActive)"
+                    aria-hidden="true"
+                  />
+                  <span class="truncate">{{ child.label }}</span>
+                </a>
+              }
+            </div>
+          }
+        }
+      }
+    </nav>
+    }
+
+    <!-- Pied de colonne. Le solde de crédits est une VITRINE : aucun système
+         de crédits n'existe côté serveur (voir frontend-demo.config.ts). -->
+    <div class="shrink-0 border-t border-border-soft">
+      <div class="m-[14px] rounded-lg bg-success-soft p-[14px]">
+        <p class="text-xs font-medium text-success">{{ credits.label }}</p>
+        <p class="mt-0.5 text-2xl font-semibold text-success">
+          {{ credits.amount }}
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2 px-[14px] pb-[14px]">
+        <a
+          [routerLink]="documentation.route"
+          (click)="mobile ? close.emit() : null"
+          class="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full bg-foreground px-4 text-xs font-medium text-white transition-opacity duration-150 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        >
+          <lucide-icon [img]="CodeIcon" class="size-3.5" aria-hidden="true" />
+          {{ documentation.label }}
+          <lucide-icon
+            [img]="ArrowUpRightIcon"
+            class="size-3 opacity-70"
+            aria-hidden="true"
+          />
+        </a>
+
+        <!-- Thème : l'interface est claire par conception. Le bouton mène au
+             réglage réel plutôt que de simuler une bascule inexistante. -->
+        <a
+          routerLink="/settings"
+          (click)="mobile ? close.emit() : null"
+          class="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:bg-muted-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label="Thème clair — ouvrir les préférences d’apparence"
+        >
+          <lucide-icon [img]="SunIcon" class="size-4" aria-hidden="true" />
+        </a>
+      </div>
+    </div>
+  </div>
+</ng-template>

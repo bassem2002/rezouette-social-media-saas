@@ -1,0 +1,295 @@
+// Zernio Platform — Prisma Schema (MVP : Facebook + Instagram via Meta Graph API)
+// Architecture : Clean Architecture / DDD — ce schéma sert la couche infrastructure.
+// Le mapping enum <-> domaine (TS minuscules) se fait dans les mappers infra.
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  // NestJS 11 compile en CommonJS. Sans cette ligne, le générateur Prisma 7
+  // déduit ESM du `module: nodenext` du tsconfig et émet `import.meta.url`,
+  // incompatible avec le bundle CJS → "exports is not defined in ES module scope".
+  moduleFormat = "cjs"
+}
+
+// Prisma 7 : l'URL de connexion vit dans prisma.config.ts (datasource.url),
+// plus dans le schéma. Le datasource ne déclare que le provider.
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────
+
+
+/// Réseaux supportés. FACEBOOK/INSTAGRAM actifs au MVP ; les autres
+/// sont déclarés dès maintenant pour éviter une migration au moment
+/// de leur implémentation (OCP).
+enum SocialPlatform {
+  FACEBOOK
+  INSTAGRAM
+  LINKEDIN
+  TIKTOK
+  YOUTUBE
+  THREADS
+}
+
+/// Cycle de vie d'une connexion sociale. Un compte n'est jamais
+/// supprimé : on bascule en REVOKED pour préserver l'historique.
+enum SocialAccountStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+  ERROR
+}
+
+/// Statut agrégé d'un Post (dérivé de l'état de ses cibles).
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  PARTIALLY_PUBLISHED
+  FAILED
+}
+
+/// Statut de la diffusion d'un Post sur une cible précise.
+enum PlatformPublishStatus {
+  PENDING
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  DELETED
+}
+
+/// Type de média. IMAGE/VIDEO suffisent au MVP FB/IG.
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+/// Réseaux ciblés par l'historique des publications (SocialPost) et par les
+/// planifications (ScheduledPost). FB/IG (Meta) + TIKTOK (Content Posting API)
+/// + LINKEDIN (profil membre) + YOUTUBE (Data API v3).
+enum SocialPostPlatform {
+  FACEBOOK
+  INSTAGRAM
+  TIKTOK
+  LINKEDIN
+  YOUTUBE
+}
+
+/// Cycle de vie d'une publication unitaire dans l'historique.
+enum SocialPostStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+}
+
+/// Cycle de vie d'une publication programmée (planification).
+/// SCHEDULED en attente → PROCESSING pendant l'envoi → terminal
+/// (PUBLISHED/FAILED) ou CANCELLED si annulée avant échéance.
+enum ScheduledPostStatus {
+  SCHEDULED
+  PROCESSING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────────────────────
+// Models
+// ─────────────────────────────────────────────────────────────
+
+/// Propriétaire racine de toutes les ressources (frontière de tenance
+/// du MVP — Workspace introduit plus tard de façon additive).
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  socialAccounts SocialAccount[]
+  posts          Post[]
+  socialPosts    SocialPost[]
+  scheduledPosts ScheduledPost[]
+
+  @@map("users")
+}
+
+/// Une connexion OAuth à une cible précise (une Page Facebook,
+/// un compte Instagram Business). Détient le token (chiffré côté infra).
+model SocialAccount {
+  id                String              @id @default(uuid()) @db.Uuid
+  userId            String              @db.Uuid
+  platform          SocialPlatform
+  /// Identifiant de la cible côté réseau (page id / ig user id).
+  externalAccountId String
+  accountName       String
+  /// Token chiffré au repos — JAMAIS de secret en clair (chiffrement infra).
+  accessToken       String
+  refreshToken      String?
+  tokenExpiresAt    DateTime?
+  scopes            String[]            @default([])
+  status            SocialAccountStatus @default(ACTIVE)
+  /// Spécificités provider (ex. IG: ig_business_account_id + page id liée).
+  metadata          Json?
+  /// Cycle de vie du token : `tokenExpiresAt` porte l'expiration (alimentée par
+  /// l'OAuth). `lastRefreshAt`/`needsReconnect` préparent le refresh automatique.
+  lastRefreshAt     DateTime?
+  needsReconnect    Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postPlatformResults PostPlatformResult[]
+
+  @@unique([userId, platform, externalAccountId])
+  @@index([userId])
+  @@index([status, tokenExpiresAt])
+  @@map("social_accounts")
+}
+
+/// Agrégat de contenu, neutre vis-à-vis des plateformes. Objet rédigé
+/// et planifié par l'utilisateur ; possède Media et PostPlatformResult.
+model Post {
+  id          String     @id @default(uuid()) @db.Uuid
+  userId      String     @db.Uuid
+  content     String
+  status      PostStatus @default(DRAFT)
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media           Media[]
+  platformResults PostPlatformResult[]
+
+  @@index([userId, status])
+  @@index([status, scheduledAt])
+  @@map("posts")
+}
+
+/// Actif média rattaché à un Post, hébergé sur Cloudinary.
+/// Aligné sur MediaStoragePort (secureUrl, publicId, format, bytes).
+model Media {
+  id                 String    @id @default(uuid()) @db.Uuid
+  postId             String    @db.Uuid
+  type               MediaType
+  url                String
+  secureUrl          String
+  cloudinaryPublicId String
+  format             String?
+  bytes              Int?
+  /// Ordre dans le carrousel.
+  position           Int       @default(0)
+  createdAt          DateTime  @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("media")
+}
+
+/// Cœur du multi-réseaux : diffusion d'un Post sur un SocialAccount,
+/// avec son état propre. Source unique des IDs externes (ancre analytics).
+model PostPlatformResult {
+  id              String                @id @default(uuid()) @db.Uuid
+  postId          String                @db.Uuid
+  socialAccountId String                @db.Uuid
+  status          PlatformPublishStatus @default(PENDING)
+  /// ID du post côté réseau — ancrage des analytics futures.
+  externalPostId  String?
+  permalinkUrl    String?
+  errorMessage    String?
+  publishedAt     DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  post          Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  /// Pas de Cascade : on préserve l'historique même si le compte passe REVOKED.
+  socialAccount SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Restrict)
+
+  @@unique([postId, socialAccountId])
+  @@index([socialAccountId, status])
+  @@index([externalPostId])
+  @@map("post_platform_results")
+}
+
+/// Historique persistant des publications unitaires (une ligne = un envoi vers
+/// une plateforme). Trace simple et autonome alimentée par les use-cases de
+/// publication : PENDING avant l'appel, puis PUBLISHED ou FAILED.
+model SocialPost {
+  id             String             @id @default(uuid()) @db.Uuid
+  userId         String             @db.Uuid
+  platform       SocialPostPlatform
+  /// Référence du SocialAccount source (id interne) — null si non résolu.
+  accountId      String?
+  /// ID du post côté réseau, renseigné en cas de succès.
+  externalPostId String?
+  /// ID de tâche de publication asynchrone (TikTok `publish_id`) — permet le
+  /// suivi/reconciliation du statut d'une publication différée côté réseau.
+  /// Null pour les publications synchrones (Meta).
+  publishId      String?
+  caption        String?
+  mediaUrl       String?
+  status         SocialPostStatus   @default(PENDING)
+  errorMessage   String?
+  /// Diagnostic Meta normalisé (renseigné si FAILED) — voir MetaExceptionMapper.
+  metaCode       Int?
+  metaSubcode    Int?
+  metaReason     String?
+  retryable      Boolean?
+  publishedAt    DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([platform, status])
+  @@index([externalPostId])
+  @@map("social_posts")
+}
+
+/// Publication programmée : intention de diffusion mémorisée pour un envoi
+/// différé à `scheduledAt`. Le scheduler la passe en PROCESSING puis délègue à
+/// l'orchestrateur de publication (qui crée les lignes SocialPost de l'historique).
+/// Source de vérité de la planification — distincte de l'historique unitaire.
+model ScheduledPost {
+  id          String               @id @default(uuid()) @db.Uuid
+  userId      String               @db.Uuid
+  /// Réseaux ciblés (au moins un). Réutilise l'enum FB/IG de l'historique.
+  platforms   SocialPostPlatform[]
+  message     String?
+  caption     String?
+  imageUrl    String?
+  /// URL publique de la vidéo (planification TikTok). Requise si TIKTOK est ciblé.
+  videoUrl    String?
+  /// Options spécifiques à une plateforme, indexées par réseau (ex. `youtube`:
+  /// titre, description, tags, categoryId, privacyStatus…). Champ générique
+  /// volontaire : évite une colonne dédiée par option et par réseau. Le domaine
+  /// en manipule une forme TYPÉE (ScheduledPlatformOptions) — la traduction
+  /// JSON ↔ domaine vit exclusivement dans le mapper d'infrastructure.
+  platformOptions Json?
+  scheduledAt DateTime
+  status      ScheduledPostStatus  @default(SCHEDULED)
+  /// Nombre de tentatives de traitement (incrémenté à chaque passage du scheduler).
+  attempts    Int                  @default(0)
+  /// Dernier message d'erreur agrégé (renseigné si FAILED).
+  lastError   String?
+  /// Horodatage du traitement effectif (succès ou échec).
+  processedAt DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduledAt])
+  @@index([userId])
+  @@map("scheduled_posts")
+}

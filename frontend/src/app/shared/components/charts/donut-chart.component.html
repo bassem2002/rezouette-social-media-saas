@@ -1,0 +1,58 @@
+@if (view().total === 0) {
+  <app-empty-state
+    title="Aucune donnée"
+    description="Les données apparaîtront ici après vos premières publications."
+    className="border-dashed"
+  />
+} @else {
+  <div class="flex flex-col items-center gap-5 sm:flex-row sm:justify-center">
+    <svg
+      [attr.width]="size()"
+      [attr.height]="size()"
+      [attr.viewBox]="'0 0 ' + size() + ' ' + size()"
+      role="img"
+      [attr.aria-label]="'Répartition — ' + view().summary"
+      class="shrink-0"
+    >
+      <g [attr.transform]="'rotate(-90 ' + view().center + ' ' + view().center + ')'">
+        <circle
+          [attr.cx]="view().center"
+          [attr.cy]="view().center"
+          [attr.r]="view().radius"
+          fill="none"
+          stroke="#eeeeee"
+          [attr.stroke-width]="thickness()"
+        />
+        @for (seg of view().segments; track $index) {
+          <circle
+            [attr.cx]="view().center"
+            [attr.cy]="view().center"
+            [attr.r]="view().radius"
+            fill="none"
+            [attr.stroke]="seg.color"
+            [attr.stroke-width]="thickness()"
+            [attr.stroke-dasharray]="seg.dash + ' ' + seg.gap"
+            [attr.stroke-dashoffset]="seg.offset"
+            stroke-linecap="butt"
+          />
+        }
+      </g>
+      <text x="50%" y="46%" text-anchor="middle" class="fill-foreground text-2xl font-semibold">
+        {{ view().total }}
+      </text>
+      <text x="50%" y="60%" text-anchor="middle" class="fill-[#8a8a8a] text-xs">
+        {{ centerLabel() }}
+      </text>
+    </svg>
+
+    <ul class="space-y-2">
+      @for (l of view().legend; track $index) {
+        <li class="flex items-center gap-2 text-sm">
+          <span aria-hidden="true" class="size-3 rounded-full" [style.background-color]="l.color"></span>
+          <span class="text-foreground">{{ l.label }}</span>
+          <span class="text-muted">{{ l.value }} · {{ l.pct }}%</span>
+        </li>
+      }
+    </ul>
+  </div>
+}

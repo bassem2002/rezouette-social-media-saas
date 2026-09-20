@@ -1,0 +1,167 @@
+<app-drawer
+  [open]="open()"
+  panelId="webhook-drawer"
+  title="New Webhook"
+  description="Configure a new webhook endpoint"
+  maxWidthClass="max-w-[540px]"
+  (close)="cancel()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
+    <div>
+      <app-label htmlFor="webhook-name" [required]="true">Name</app-label>
+      <input
+        id="webhook-name"
+        appInput
+        formControlName="name"
+        [invalid]="submitAttempted() && form.controls.name.invalid"
+        [attr.aria-describedby]="
+          submitAttempted() && form.controls.name.invalid ? 'webhook-name-error' : null
+        "
+      />
+      @if (submitAttempted() && form.controls.name.invalid) {
+        <p id="webhook-name-error" class="mt-1.5 text-sm text-error" role="alert">
+          Indiquez un nom (80 caractères maximum).
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label htmlFor="webhook-url" [required]="true">URL</app-label>
+      <input
+        id="webhook-url"
+        appInput
+        type="url"
+        formControlName="url"
+        [placeholder]="urlPlaceholder"
+        [invalid]="submitAttempted() && form.controls.url.invalid"
+        [attr.aria-describedby]="
+          submitAttempted() && form.controls.url.invalid ? 'webhook-url-error' : null
+        "
+      />
+      @if (submitAttempted() && form.controls.url.invalid) {
+        <p id="webhook-url-error" class="mt-1.5 text-sm text-error" role="alert">
+          Saisissez une URL commençant par http:// ou https://.
+        </p>
+      }
+    </div>
+
+    <div>
+      <app-label htmlFor="webhook-secret">Secret Key (Optional)</app-label>
+      <div class="flex items-center gap-2">
+        <div class="relative flex-1">
+          <input
+            id="webhook-secret"
+            appInput
+            [type]="secretVisible() ? 'text' : 'password'"
+            formControlName="secret"
+            placeholder="your-secret-key"
+            className="pr-10"
+            autocomplete="off"
+            aria-describedby="webhook-secret-help"
+          />
+          <button
+            type="button"
+            (click)="secretVisible.set(!secretVisible())"
+            [attr.aria-label]="secretVisible() ? 'Masquer le secret' : 'Afficher le secret'"
+            [attr.aria-pressed]="secretVisible()"
+            class="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted transition-colors duration-150 hover:bg-muted-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <lucide-icon
+              [img]="secretVisible() ? EyeOffIcon : EyeIcon"
+              class="size-4"
+            />
+          </button>
+        </div>
+        <button
+          type="button"
+          (click)="generateSecret()"
+          aria-label="Générer un secret de démonstration"
+          class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-muted transition-colors duration-150 hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <lucide-icon [img]="RotateIcon" class="size-4" />
+        </button>
+      </div>
+      <p id="webhook-secret-help" class="mt-1.5 text-xs text-muted">
+        Used to generate HMAC signature in {{ signatureHeader }} header. Le secret
+        généré est un exemple : il n’est ni transmis, ni enregistré.
+      </p>
+    </div>
+
+    <div formArrayName="headers">
+      <div class="flex items-center justify-between gap-2">
+        <app-label>Custom Headers (Optional)</app-label>
+      </div>
+
+      @for (header of headers.controls; track $index) {
+        <div [formGroupName]="$index" class="mb-2 flex items-center gap-2">
+          <input
+            appInput
+            formControlName="key"
+            placeholder="Header"
+            [attr.aria-label]="'Nom de l’en-tête ' + ($index + 1)"
+          />
+          <input
+            appInput
+            formControlName="value"
+            placeholder="Value"
+            [attr.aria-label]="'Valeur de l’en-tête ' + ($index + 1)"
+          />
+          <button
+            type="button"
+            (click)="removeHeader($index)"
+            [attr.aria-label]="'Retirer l’en-tête ' + ($index + 1)"
+            class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-muted transition-colors duration-150 hover:bg-error-soft hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <lucide-icon [img]="TrashIcon" class="size-4" />
+          </button>
+        </div>
+      }
+
+      <button
+        type="button"
+        (click)="addHeader()"
+        class="mt-1 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-surface text-sm font-medium text-muted transition-colors duration-150 hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <lucide-icon [img]="PlusIcon" class="size-4" aria-hidden="true" />
+        Add Header
+      </button>
+    </div>
+
+    <fieldset formGroupName="events">
+      <legend class="mb-1.5 block text-sm font-medium text-foreground">
+        Events
+      </legend>
+
+      @for (group of eventGroups; track group.category) {
+        <p class="mb-2 mt-3 text-sm font-semibold text-foreground">
+          {{ group.category }}
+        </p>
+        <div class="grid gap-2 sm:grid-cols-2">
+          @for (event of group.events; track event) {
+            <label
+              class="flex cursor-pointer items-center gap-2 text-sm text-foreground"
+            >
+              <input
+                type="checkbox"
+                [formControlName]="event"
+                class="size-4 shrink-0 rounded border-border text-primary accent-[var(--rz-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              />
+              <span class="font-mono text-xs">{{ event }}</span>
+            </label>
+          }
+        </div>
+      }
+
+      @if (submitAttempted() && selectedEventCount() === 0) {
+        <p class="mt-2 text-sm text-error" role="alert">
+          Sélectionnez au moins un événement.
+        </p>
+      }
+    </fieldset>
+  </form>
+
+  <div drawerFooter class="contents">
+    <app-button className="flex-1" (click)="submit()">Create Webhook</app-button>
+    <app-button variant="secondary" (click)="cancel()">Cancel</app-button>
+  </div>
+</app-drawer>

@@ -1,0 +1,86 @@
+<header
+  class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur sm:px-6"
+>
+  <button
+    type="button"
+    (click)="menuClick.emit()"
+    aria-label="Ouvrir le menu"
+    class="flex size-10 items-center justify-center rounded-xl text-muted transition-colors duration-150 hover:bg-muted-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
+  >
+    <lucide-icon [img]="MenuIcon" class="size-5" />
+  </button>
+
+  <div class="hidden sm:block">
+    <app-breadcrumb />
+  </div>
+
+  <form (submit)="submitSearch($event)" class="ml-auto hidden md:block">
+    <app-search-bar
+      [value]="search()"
+      (valueChange)="search.set($event)"
+      placeholder="Rechercher dans l'historique…"
+      className="w-64"
+      ariaLabel="Rechercher dans l'historique"
+    />
+  </form>
+
+  <div class="ml-auto flex items-center gap-1 md:ml-2">
+    <!-- Notifications -->
+    <div class="relative">
+      <button
+        type="button"
+        (click)="notifOpen.set(!notifOpen())"
+        aria-label="Notifications"
+        aria-haspopup="true"
+        [attr.aria-expanded]="notifOpen()"
+        class="relative flex size-10 items-center justify-center rounded-xl text-muted transition-colors duration-150 hover:bg-muted-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <lucide-icon [img]="BellIcon" class="size-5" />
+        @if (needsReconnect()) {
+          <span class="absolute right-2.5 top-2.5 size-2 rounded-full bg-error ring-2 ring-background"></span>
+        }
+      </button>
+
+      @if (notifOpen()) {
+        <button
+          type="button"
+          class="fixed inset-0 z-10 cursor-default"
+          aria-hidden="true"
+          tabindex="-1"
+          (click)="notifOpen.set(false)"
+        ></button>
+        <div
+          class="animate-fade-in absolute right-0 z-20 mt-2 w-72 rounded-xl border border-border bg-white p-2 shadow-subtle"
+        >
+          <p class="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+            Notifications
+          </p>
+          @if (needsReconnect()) {
+            <button
+              type="button"
+              (click)="goToAccounts()"
+              class="flex w-full items-start gap-2 rounded-lg p-2 text-left text-sm transition-colors duration-150 hover:bg-muted-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <span class="mt-1 size-2 shrink-0 rounded-full bg-error"></span>
+              <span>
+                <span class="font-medium text-foreground">Reconnexion requise</span>
+                <span class="block text-muted">Un compte Meta doit être reconnecté.</span>
+              </span>
+            </button>
+          } @else {
+            <p class="p-2 text-sm text-muted">Aucune nouvelle notification.</p>
+          }
+        </div>
+      }
+    </div>
+
+    <button
+      type="button"
+      (click)="goToSettings()"
+      aria-label="Profil et paramètres"
+      class="flex size-9 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary transition-colors duration-150 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+    >
+      ZD
+    </button>
+  </div>
+</header>

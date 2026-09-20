@@ -1,0 +1,103 @@
+<div class="space-y-5">
+  <app-page-header
+    title="Webhooks"
+    description="Get notified when events happen"
+  >
+    <app-badge titleBadge tone="warning">{{ previewBadge }}</app-badge>
+
+    <div pageActions class="flex items-center gap-2">
+      <app-button
+        size="sm"
+        className="rounded-md"
+        ariaHasPopup="dialog"
+        ariaControls="webhook-drawer"
+        [ariaExpanded]="drawerOpen()"
+        (click)="drawerOpen.set(true)"
+      >
+        <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+        Add Webhook
+      </app-button>
+    </div>
+  </app-page-header>
+
+  <app-frontend-preview-notice />
+
+  @if (!hasWebhooks()) {
+    <div
+      class="flex flex-col items-center justify-center gap-4 rounded-xl border border-border bg-surface px-6 py-20 text-center"
+    >
+      <span
+        class="flex size-20 items-center justify-center rounded-full bg-card text-subtle"
+      >
+        <lucide-icon [img]="WebhookIcon" class="size-9" aria-hidden="true" />
+      </span>
+      <div>
+        <p class="text-xl font-semibold text-foreground">No webhooks yet</p>
+        <p class="mx-auto mt-1.5 max-w-sm text-sm text-muted">
+          Create your first webhook to get notified when events happen.
+        </p>
+      </div>
+      <app-button
+        className="rounded-md"
+        ariaHasPopup="dialog"
+        ariaControls="webhook-drawer"
+        [ariaExpanded]="drawerOpen()"
+        (click)="drawerOpen.set(true)"
+      >
+        <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+        Create Webhook
+      </app-button>
+    </div>
+  } @else {
+    <!-- Cartes temporaires : elles n'existent que le temps de la session et le
+         disent explicitement. -->
+    <div class="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+      @for (webhook of webhooks(); track webhook.id) {
+        <article
+          class="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 shadow-subtle"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-foreground">
+                {{ webhook.name }}
+              </p>
+              <p class="truncate text-xs text-muted">{{ webhook.url }}</p>
+            </div>
+            <app-badge tone="warning">Preview</app-badge>
+          </div>
+
+          <ul class="flex flex-wrap gap-1">
+            @for (event of webhook.events; track event) {
+              <li
+                class="rounded-md bg-card px-2 py-0.5 font-mono text-[11px] text-muted"
+              >
+                {{ event }}
+              </li>
+            }
+          </ul>
+
+          <p class="text-xs text-subtle">
+            Non enregistré : aucun événement ne sera envoyé à cette adresse.
+          </p>
+
+          <div class="mt-auto flex justify-end">
+            <button
+              type="button"
+              (click)="remove(webhook.id)"
+              [attr.aria-label]="'Retirer le webhook ' + webhook.name"
+              class="inline-flex size-8 items-center justify-center rounded-md text-muted transition-colors duration-150 hover:bg-error-soft hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <lucide-icon [img]="TrashIcon" class="size-4" />
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  <app-webhook-drawer
+    [open]="drawerOpen()"
+    (close)="drawerOpen.set(false)"
+    (submitted)="onSubmitted($event)"
+  />
+</div>

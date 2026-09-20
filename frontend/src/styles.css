@@ -1,0 +1,196 @@
+@import 'tailwindcss';
+
+/* ─────────────────────────────────────────────────────────────
+   Rezouette — design tokens (thème CLAIR).
+
+   SOURCE UNIQUE : le bloc `@theme` ci-dessous. Tailwind v4 y puise
+   les utilitaires (bg-*, text-*, border-*) ET émet chaque valeur
+   comme variable CSS sur :root. Les alias `--rz-*` déclarés juste
+   après pointent dessus : le CSS écrit à la main dispose ainsi du
+   vocabulaire de la charte sans dupliquer une seule valeur (donc
+   sans dérive possible entre les deux jeux de noms).
+
+   Repères visuels : fond blanc, sidebar gris très clair, bordures
+   fines, accents orange-rouge, ombres quasi imperceptibles. Aucun
+   dégradé, aucun effet de verre, aucune grande surface colorée.
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  /* Surfaces */
+  --color-background: #ffffff;
+  --color-sidebar: #fbfbfb;
+  --color-surface: #ffffff;
+  /* `card` = surface DOUCE (bandeaux internes, survols de lignes,
+     boutons secondaires). Les cartes elles-mêmes sont blanches. */
+  --color-card: #f8f8f8;
+  --color-border: #e5e5e5;
+  --color-border-soft: #eeeeee;
+
+  /* Texte */
+  --color-foreground: #171717;
+  --color-muted: #676767;
+  --color-subtle: #8a8a8a;
+
+  /* Accent de marque */
+  --color-primary: #ff3b18;
+  --color-primary-hover: #e93414;
+  --color-primary-soft: #fff0ec;
+
+  /* États */
+  --color-success: #079455;
+  --color-success-soft: #dcfae6;
+  --color-error: #d92d20;
+  --color-error-soft: #fee4e2;
+  --color-warning: #dc8a00;
+  --color-warning-soft: #fff3cc;
+  --color-info: #2563eb;
+  --color-info-soft: #eaf1ff;
+  --color-muted-soft: #f3f3f3;
+  --color-active: #ececec;
+
+  /* Rayons — modérés, jamais de pilule sur les cartes. `rounded-xl`
+     est l'utilitaire par défaut du design system : le repointer ici
+     resserre l'ensemble de l'interface d'un seul geste. */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-raised: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* Inter si la police est disponible localement ; sinon repli sur la
+     pile système. Aucune police distante n'est chargée : pas de requête
+     bloquante, pas de dépendance à un CDN. */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Alias de charte — même valeurs, vocabulaire « rz ». */
+:root {
+  --rz-background: var(--color-background);
+  --rz-sidebar-background: var(--color-sidebar);
+  --rz-surface: var(--color-surface);
+  --rz-surface-soft: var(--color-card);
+  --rz-border: var(--color-border);
+  --rz-border-soft: var(--color-border-soft);
+  --rz-text: var(--color-foreground);
+  --rz-text-secondary: var(--color-muted);
+  --rz-text-muted: var(--color-subtle);
+
+  --rz-primary: var(--color-primary);
+  --rz-primary-hover: var(--color-primary-hover);
+  --rz-primary-soft: var(--color-primary-soft);
+
+  --rz-success: var(--color-success);
+  --rz-success-background: var(--color-success-soft);
+  --rz-danger: var(--color-error);
+  --rz-danger-background: var(--color-error-soft);
+  --rz-warning: var(--color-warning);
+  --rz-warning-background: var(--color-warning-soft);
+  --rz-info: var(--color-info);
+  --rz-info-background: var(--color-info-soft);
+  --rz-active-background: var(--color-active);
+
+  --rz-radius-sm: var(--radius-sm);
+  --rz-radius-md: var(--radius-md);
+  --rz-radius-lg: var(--radius-xl);
+  --rz-shadow-card: var(--shadow-subtle);
+
+  /* Largeur de la colonne de navigation (desktop). */
+  --rz-sidebar-width: 304px;
+}
+
+/* Base — thème clair assumé, aucune mise en page centrée par défaut. */
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background-color: var(--rz-background);
+  color: var(--rz-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+app-root {
+  display: block;
+  min-height: 100svh;
+}
+
+/* Accessibilité — focus visible homogène (WCAG 2.4.7). Le contour reste
+   contrasté sur fond blanc comme sur fond gris de sidebar. */
+:focus-visible {
+  outline: 2px solid var(--rz-primary);
+  outline-offset: 2px;
+  border-radius: var(--rz-radius-sm);
+}
+
+/* Respecte la préférence "réduire les animations". */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Animations très discrètes (≤150ms), substitut léger à une lib d'animation. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 150ms ease-out both;
+}
+
+/* Scrollbar discrète. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rz-border) transparent;
+}
+
+/* Grille des cartes de connexion : colonnes de largeur FIXE alignées à gauche
+   (et non étirées sur toute la largeur), conformément à la charte. Utilitaire
+   dédié plutôt qu'une composition Tailwind, car `auto-fill` avec une borne
+   haute ne s'exprime pas avec les classes standards. */
+.rz-connections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 286px));
+  gap: 10px;
+  justify-content: start;
+}
+
+/* Sous 340 px, une colonne fixe de 280 px déborderait : on repasse à une
+   colonne fluide plutôt que d'imposer un défilement horizontal. */
+@media (max-width: 340px) {
+  .rz-connections-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Grille des cartes de publication. Sous `lg`, elle s'adapte seule à la
+   largeur ; au-delà, elle respecte le nombre de colonnes choisi par
+   l'utilisateur (`--rz-post-cols`). Le réglage manuel n'a de sens que sur
+   grand écran : l'imposer sur mobile écraserait les cartes. */
+.rz-posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 1024px) {
+  .rz-posts-grid {
+    grid-template-columns: repeat(var(--rz-post-cols, 4), minmax(0, 1fr));
+  }
+}

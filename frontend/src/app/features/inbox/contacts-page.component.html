@@ -1,0 +1,177 @@
+<div class="space-y-5">
+  <app-page-header
+    title="Contacts"
+    description="Manage contacts across all platforms"
+  >
+    <app-preview-badge titleBadge />
+    <div pageActions class="flex flex-wrap items-center gap-2">
+      <app-button
+        variant="secondary"
+        size="sm"
+        className="rounded-md"
+        ariaHasPopup="dialog"
+        [ariaExpanded]="importOpen()"
+        (click)="importOpen.set(true)"
+      >
+        <lucide-icon buttonIcon [img]="UploadIcon" class="size-4" />
+        Import CSV
+      </app-button>
+      <app-button
+        size="sm"
+        className="rounded-md"
+        ariaHasPopup="dialog"
+        ariaControls="contact-drawer"
+        [ariaExpanded]="addOpen()"
+        (click)="openAdd()"
+      >
+        <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+        Add Contact
+      </app-button>
+    </div>
+  </app-page-header>
+
+  <app-frontend-preview-notice />
+
+  <div class="flex flex-wrap items-center gap-2">
+    <app-search-bar
+      [value]="search()"
+      (valueChange)="search.set($event)"
+      placeholder="Search contacts…"
+      ariaLabel="Rechercher un contact"
+      className="w-full sm:w-[260px]"
+    />
+    <app-filter-select
+      controlId="contacts-platform"
+      label="Plateforme"
+      [options]="platformOptions"
+      [value]="platform()"
+      (valueChange)="platform.set($event)"
+      className="ml-auto w-[148px]"
+    />
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+    <table class="w-full border-collapse text-sm">
+      <caption class="sr-only">Contacts — aperçu frontend</caption>
+      <thead>
+        <tr class="border-b border-border bg-card">
+          <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Name</th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Identifier</th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Tags</th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Status</th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Last Active</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (contact of rows(); track contact.id) {
+          <tr class="border-b border-border last:border-0">
+            <td class="px-4 py-3 text-foreground">{{ contact.name }}</td>
+            <td class="px-4 py-3 text-muted">{{ contact.identifier }}</td>
+            <td class="px-4 py-3 text-muted">{{ contact.tags.join(', ') || '—' }}</td>
+            <td class="px-4 py-3 text-muted">{{ contact.status }}</td>
+            <td class="px-4 py-3 text-muted">{{ contact.lastActive ?? '—' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="px-4 py-16 text-center">
+              <span class="mx-auto flex size-12 items-center justify-center rounded-full bg-card text-subtle">
+                <lucide-icon [img]="ContactsIcon" class="size-6" aria-hidden="true" />
+              </span>
+              <p class="mt-3 text-sm font-medium text-foreground">
+                No contacts yet.
+              </p>
+              <p class="mx-auto mt-1 max-w-sm text-sm text-muted">
+                Contacts are created automatically when someone messages you.
+              </p>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-drawer
+    [open]="addOpen()"
+    panelId="contact-drawer"
+    title="Add contact"
+    description="Aperçu frontend — aucun contact n’est enregistré"
+    maxWidthClass="max-w-[520px]"
+    (close)="addOpen.set(false)"
+  >
+    <form [formGroup]="form" (ngSubmit)="submitAdd()" class="space-y-4">
+      <div>
+        <app-label htmlFor="contact-name" [required]="true">Name</app-label>
+        <input
+          id="contact-name"
+          appInput
+          formControlName="name"
+          placeholder="Nom du contact"
+          [invalid]="submitAttempted() && form.controls.name.invalid"
+        />
+        @if (submitAttempted() && form.controls.name.invalid) {
+          <p class="mt-1.5 text-sm text-error" role="alert">
+            Indiquez un nom (80 caractères maximum).
+          </p>
+        }
+      </div>
+
+      <div>
+        <app-label htmlFor="contact-identifier" [required]="true">Identifier</app-label>
+        <input
+          id="contact-identifier"
+          appInput
+          formControlName="identifier"
+          placeholder="@identifiant ou adresse"
+          [invalid]="submitAttempted() && form.controls.identifier.invalid"
+        />
+        @if (submitAttempted() && form.controls.identifier.invalid) {
+          <p class="mt-1.5 text-sm text-error" role="alert">
+            Indiquez un identifiant (120 caractères maximum).
+          </p>
+        }
+      </div>
+
+      <div>
+        <app-label htmlFor="contact-platform">Platform</app-label>
+        <div class="relative">
+          <select id="contact-platform" appSelect formControlName="platform">
+            @for (option of platformOptions; track option.value) {
+              @if (option.value !== 'all') {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            }
+          </select>
+          <lucide-icon
+            [img]="ChevronDownIcon"
+            class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+
+      <p class="rounded-lg border border-[#ffd9cf] bg-primary-soft px-3 py-2.5 text-[13px] text-foreground">
+        Ce contact ne sera enregistré nulle part et disparaîtra au rechargement.
+      </p>
+    </form>
+
+    <div drawerFooter class="contents">
+      <app-button variant="secondary" (click)="addOpen.set(false)">Cancel</app-button>
+      <app-button (click)="submitAdd()">Add contact</app-button>
+    </div>
+  </app-drawer>
+
+  <app-dialog
+    [open]="importOpen()"
+    title="Import CSV"
+    description="Aperçu frontend"
+    (close)="importOpen.set(false)"
+  >
+    <p class="text-sm text-muted">
+      Aucun fichier n’est envoyé et aucun contact n’est créé. L’import sera
+      disponible avec le service Contacts.
+    </p>
+    <div dialogFooter class="contents">
+      <app-button variant="secondary" (click)="notifyImport()">Fermer</app-button>
+    </div>
+  </app-dialog>
+</div>

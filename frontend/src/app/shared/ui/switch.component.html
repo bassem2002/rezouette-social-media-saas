@@ -1,0 +1,12 @@
+<button
+  type="button"
+  role="switch"
+  [id]="controlId()"
+  [attr.aria-checked]="checked()"
+  [attr.aria-label]="ariaLabel()"
+  [disabled]="disabled()"
+  (click)="toggle()"
+  [class]="trackClasses()"
+>
+  <span [class]="thumbClasses()"></span>
+</button>

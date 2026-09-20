@@ -1,0 +1,20 @@
+<div [class]="containerClasses()">
+  <div [class]="barsClasses()" role="img" [attr.aria-label]="'Histogramme — ' + summary()">
+    @for (d of data(); track $index) {
+      <div class="flex h-full flex-1 flex-col items-center justify-end gap-1">
+        <span class="text-xs font-medium text-muted">{{ d.value }}</span>
+        <div
+          class="w-full max-w-10 rounded-t-md transition-[height] duration-150"
+          [style.height.%]="(d.value / max()) * 100"
+          [style.min-height]="d.value > 0 ? '4px' : '0px'"
+          [style.background-color]="d.color ?? color()"
+        ></div>
+      </div>
+    }
+  </div>
+  <div class="mt-2 flex gap-2">
+    @for (d of data(); track $index) {
+      <div class="flex-1 text-center text-xs text-muted">{{ d.label }}</div>
+    }
+  </div>
+</div>

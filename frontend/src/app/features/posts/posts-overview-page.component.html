@@ -1,0 +1,294 @@
+<div class="space-y-5">
+  <app-page-header
+    title="Posts"
+    description="Manage your scheduled and published content"
+  >
+    <div pageActions class="flex flex-wrap items-center gap-2">
+      <app-button size="sm" className="rounded-md" (click)="openComposer()">
+        <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+        Create post
+      </app-button>
+      <app-button
+        variant="secondary"
+        size="sm"
+        className="rounded-md"
+        ariaHasPopup="dialog"
+        [ariaExpanded]="importOpen()"
+        (click)="importOpen.set(true)"
+      >
+        <lucide-icon buttonIcon [img]="UploadIcon" class="size-4" />
+        Import CSV
+      </app-button>
+    </div>
+  </app-page-header>
+
+  <!-- ── Barre de filtres ────────────────────────────────────────────────── -->
+  <div class="flex flex-wrap items-center gap-2">
+    <app-filter-select
+      controlId="posts-scope"
+      label="Portée"
+      [options]="scopeOptions"
+      [value]="scope()"
+      (valueChange)="scope.set($event)"
+      className="w-[152px]"
+    />
+    <app-filter-select
+      controlId="posts-status"
+      label="Statut"
+      [options]="statusOptions"
+      [value]="status()"
+      (valueChange)="status.set($event)"
+      className="w-[172px]"
+    />
+    <app-filter-select
+      controlId="posts-platform"
+      label="Plateforme"
+      [options]="platformOptions"
+      [value]="platform()"
+      (valueChange)="platform.set($event)"
+      className="w-[152px]"
+    />
+    <app-filter-select
+      controlId="posts-profile"
+      label="Profil"
+      [options]="profileOptions"
+      [value]="profile()"
+      (valueChange)="profile.set($event)"
+      className="w-[136px]"
+    />
+    <app-filter-select
+      controlId="posts-user"
+      label="Utilisateur"
+      [options]="userOptions"
+      [value]="user()"
+      (valueChange)="user.set($event)"
+      className="w-[128px]"
+    />
+    <app-filter-select
+      controlId="posts-dates"
+      label="Période"
+      [options]="dateOptions"
+      [value]="dateRange()"
+      (valueChange)="dateRange.set($event)"
+      className="w-[148px]"
+    />
+
+    <div class="ml-auto flex flex-wrap items-center gap-2">
+      <app-filter-select
+        controlId="posts-sort"
+        label="Tri"
+        [options]="sortOptions"
+        [value]="sort()"
+        (valueChange)="sort.set($event)"
+        className="w-[148px]"
+      />
+
+      <!-- Bascule de vue -->
+      <div
+        class="flex items-center gap-0.5 rounded-md border border-border bg-surface p-0.5"
+        role="group"
+        aria-label="Mode d’affichage"
+      >
+        <button
+          type="button"
+          (click)="view.set('grid')"
+          [attr.aria-pressed]="view() === 'grid'"
+          aria-label="Vue grille"
+          class="inline-flex size-8 items-center justify-center rounded-[5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          [class]="view() === 'grid' ? 'bg-active text-foreground' : 'text-muted hover:bg-muted-soft'"
+        >
+          <lucide-icon [img]="GridIcon" class="size-4" />
+        </button>
+        <button
+          type="button"
+          (click)="view.set('list')"
+          [attr.aria-pressed]="view() === 'list'"
+          aria-label="Vue liste"
+          class="inline-flex size-8 items-center justify-center rounded-[5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          [class]="view() === 'list' ? 'bg-active text-foreground' : 'text-muted hover:bg-muted-soft'"
+        >
+          <lucide-icon [img]="ListIcon" class="size-4" />
+        </button>
+        <button
+          type="button"
+          (click)="goToCalendar()"
+          aria-label="Vue calendrier — ouvrir le calendrier"
+          class="inline-flex size-8 items-center justify-center rounded-[5px] text-muted transition-colors duration-150 hover:bg-muted-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <lucide-icon [img]="CalendarIcon" class="size-4" />
+        </button>
+      </div>
+
+      <!-- Densité de la grille -->
+      @if (view() === 'grid') {
+        <div
+          class="hidden items-center gap-1 rounded-md border border-border bg-surface px-1 lg:flex"
+        >
+          <button
+            type="button"
+            (click)="setColumns(-1)"
+            [disabled]="!canDecrease()"
+            aria-label="Moins de colonnes"
+            class="inline-flex size-7 items-center justify-center rounded text-muted transition-colors duration-150 hover:bg-muted-soft disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <lucide-icon [img]="MinusIcon" class="size-3.5" />
+          </button>
+          <span class="min-w-4 text-center text-xs text-muted" aria-live="polite">
+            {{ columns() }}
+          </span>
+          <button
+            type="button"
+            (click)="setColumns(1)"
+            [disabled]="!canIncrease()"
+            aria-label="Plus de colonnes"
+            class="inline-flex size-7 items-center justify-center rounded text-muted transition-colors duration-150 hover:bg-muted-soft disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <lucide-icon [img]="PlusIcon" class="size-3.5" />
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Seules les zones non connectées sont signalées : l'historique, lui, est
+       bien réel. -->
+  <app-frontend-preview-notice
+    variant="partial"
+    detail="Les filtres « profils » et « utilisateurs » ainsi que l’import CSV ne sont pas encore gérés par le backend."
+  />
+
+  @if (query.isPending()) {
+    <div class="rz-posts-grid" [style]="gridStyle()">
+      @for (i of [0, 1, 2, 3]; track i) {
+        <div class="rounded-xl border border-border bg-surface p-4">
+          <app-skeleton className="h-4 w-32" />
+          <app-skeleton className="mt-3 h-3 w-20" />
+          <app-skeleton className="mt-4 h-16 w-full" />
+        </div>
+      }
+    </div>
+  } @else if (query.isError()) {
+    <app-error-state
+      title="Impossible de charger les publications"
+      description="L’historique n’a pas pu être récupéré. Vérifiez que le serveur est accessible, puis réessayez."
+      (retry)="query.refetch()"
+    />
+  } @else if (isEmptyHistory()) {
+    <div class="rounded-xl border border-dashed border-border bg-surface p-12 text-center">
+      <p class="text-base font-semibold text-foreground">
+        Aucune publication pour le moment
+      </p>
+      <p class="mx-auto mt-1 max-w-md text-sm text-muted">
+        Vos publications apparaîtront ici dès votre premier envoi.
+      </p>
+      <div class="mt-3">
+        <app-button className="rounded-md" (click)="openComposer()">
+          <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+          Create post
+        </app-button>
+      </div>
+    </div>
+  } @else if (!hasResults()) {
+    <div class="rounded-xl border border-dashed border-border bg-surface p-10 text-center">
+      <p class="text-sm font-medium text-foreground">
+        Aucune publication ne correspond à ces filtres
+      </p>
+      <button
+        type="button"
+        (click)="resetFilters()"
+        class="mt-2 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      >
+        Réinitialiser les filtres
+      </button>
+    </div>
+  } @else if (view() === 'grid') {
+    <p class="sr-only" aria-live="polite">{{ resultLabel() }}</p>
+    <div class="rz-posts-grid" [style]="gridStyle()">
+      @for (group of filtered(); track group.key) {
+        <app-post-card [group]="group" (open)="selected.set(group)" />
+      }
+    </div>
+  } @else {
+    <p class="sr-only" aria-live="polite">{{ resultLabel() }}</p>
+    <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+      <table class="w-full border-collapse text-sm">
+        <caption class="sr-only">Publications</caption>
+        <thead>
+          <tr class="border-b border-border bg-card">
+            <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Publication</th>
+            <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Plateformes</th>
+            <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Statut</th>
+            <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Date</th>
+            <th scope="col" class="whitespace-nowrap px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (group of filtered(); track group.key) {
+            <tr class="border-b border-border last:border-0">
+              <td class="max-w-xs px-4 py-3">
+                <span class="block truncate font-medium text-foreground">
+                  {{ postTitle(group) }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="flex items-center gap-1.5">
+                  @for (platform of group.platforms; track platform) {
+                    <app-platform-icon
+                      [platform]="platform.toLowerCase()"
+                      className="size-4 text-muted"
+                    />
+                  }
+                </span>
+              </td>
+              <td class="whitespace-nowrap px-4 py-3">
+                <app-badge [tone]="statusConfig[group.status].tone">
+                  {{ statusConfig[group.status].label }}
+                </app-badge>
+              </td>
+              <td class="whitespace-nowrap px-4 py-3 text-muted">
+                {{ formatDateTime(group.publishedAt ?? group.createdAt) }}
+              </td>
+              <td class="whitespace-nowrap px-4 py-3 text-right">
+                <app-button
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-md"
+                  (click)="selected.set(group)"
+                >
+                  Détails
+                </app-button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <app-create-post-drawer
+    [open]="createOpen()"
+    (close)="createOpen.set(false)"
+  />
+
+  <app-post-details-drawer
+    [group]="selected()"
+    (close)="selected.set(null)"
+  />
+
+  <app-dialog
+    [open]="importOpen()"
+    title="Import CSV"
+    description="Aperçu frontend"
+    (close)="importOpen.set(false)"
+  >
+    <p class="text-sm text-muted">{{ csvMessage }}</p>
+    <p class="mt-2 text-sm text-muted">
+      Aucun fichier n’est envoyé et aucune publication n’est créée.
+    </p>
+    <div dialogFooter class="contents">
+      <app-button variant="secondary" (click)="importOpen.set(false)">
+        Fermer
+      </app-button>
+    </div>
+  </app-dialog>
+</div>

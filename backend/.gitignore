@@ -1,0 +1,67 @@
+# =========================================================
+# Rezouette Backend
+# =========================================================
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Keep the public configuration template
+!.env.example
+
+# Dependencies
+/node_modules
+
+# Compiled output
+/dist
+/build
+
+# Generated Prisma client
+/generated/prisma
+
+# Test output
+/coverage
+/.nyc_output
+
+# Runtime uploads
+/uploads
+
+# Temporary files
+.temp
+.tmp
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# IDEs / editors
+/.idea
+/.vscode
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db

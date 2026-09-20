@@ -1,0 +1,94 @@
+<div class="space-y-4">
+  <app-frontend-preview-notice />
+
+  <app-inbox-split-layout
+    [detailOpen]="selectedId() !== null"
+    listLabel="Avis"
+    detailLabel="Détail de l’avis"
+    (back)="selectedId.set(null)"
+  >
+    <div inboxList class="flex h-full flex-col">
+      <div class="flex items-center gap-2 px-4 pb-3 pt-4">
+        <h1 class="text-xl font-semibold tracking-tight text-foreground">
+          Reviews
+        </h1>
+        <app-preview-badge />
+      </div>
+
+      <div class="flex flex-wrap gap-2 px-4 pb-3">
+        <app-filter-select
+          controlId="reviews-platform"
+          label="Plateforme"
+          [options]="platformOptions"
+          [value]="platform()"
+          (valueChange)="platform.set($event)"
+          className="w-[144px]"
+        />
+        <app-filter-select
+          controlId="reviews-profile"
+          label="Profil"
+          [options]="profileOptions"
+          [value]="profile()"
+          (valueChange)="profile.set($event)"
+          className="w-[132px]"
+        />
+        <app-filter-select
+          controlId="reviews-account"
+          label="Compte"
+          [options]="accountOptions"
+          [value]="account()"
+          (valueChange)="account.set($event)"
+          className="w-[140px]"
+        />
+      </div>
+
+      <div
+        class="flex items-center justify-between gap-2 border-y border-border px-4 py-3"
+      >
+        <h2 class="text-base font-semibold text-foreground">Reviews</h2>
+        <app-filter-select
+          controlId="reviews-sort"
+          label="Tri"
+          [options]="sortOptions"
+          [value]="sort()"
+          (valueChange)="sort.set($event)"
+          className="w-[140px]"
+        />
+      </div>
+
+      @if (hasReviews()) {
+        <ul class="min-h-0 flex-1 divide-y divide-border-soft overflow-y-auto">
+          @for (review of reviews(); track review.id) {
+            <li>
+              <button
+                type="button"
+                (click)="selectedId.set(review.id)"
+                class="w-full px-4 py-3 text-left transition-colors duration-150 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span class="block truncate text-sm font-medium text-foreground">
+                  {{ review.author }}
+                </span>
+                <span class="block truncate text-xs text-muted">
+                  {{ review.message }}
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="flex-1 px-4 py-10 text-center text-sm text-muted">
+          No reviews found
+        </p>
+      }
+    </div>
+
+    <div inboxDetail class="flex h-full flex-col">
+      <div class="border-b border-border px-5 py-4">
+        <h2 class="text-base font-semibold text-foreground">Select a review</h2>
+      </div>
+      <div class="flex flex-1 items-center justify-center p-8 text-center">
+        <p class="text-sm text-muted">Select a review to view details</p>
+      </div>
+    </div>
+  </app-inbox-split-layout>
+</div>

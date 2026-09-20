@@ -1,0 +1,158 @@
+<div class="space-y-4">
+  <!-- Écran mixte : la liste est réelle, les commentaires ne le sont pas. -->
+  <app-frontend-preview-notice variant="partial" [detail]="commentsReason" />
+
+  <app-inbox-split-layout
+    [detailOpen]="selected() !== null"
+    listLabel="Publications"
+    detailLabel="Commentaires de la publication"
+    (back)="selected.set(null)"
+  >
+    <!-- ── Panneau liste : DONNÉES RÉELLES ───────────────────────────────── -->
+    <div inboxList class="flex h-full flex-col">
+      <div class="px-4 pb-3 pt-4">
+        <h1 class="text-xl font-semibold tracking-tight text-foreground">
+          Comments
+        </h1>
+      </div>
+
+      <div class="flex flex-wrap gap-2 px-4 pb-3">
+        <app-filter-select
+          controlId="comments-platform"
+          label="Plateforme"
+          [options]="platformOptions"
+          [value]="platform()"
+          (valueChange)="platform.set($event)"
+          className="w-[144px]"
+        />
+        <app-filter-select
+          controlId="comments-profile"
+          label="Profil"
+          [options]="profileOptions"
+          [value]="profile()"
+          (valueChange)="profile.set($event)"
+          className="w-[132px]"
+        />
+        <app-filter-select
+          controlId="comments-account"
+          label="Compte"
+          [options]="accountOptions"
+          [value]="account()"
+          (valueChange)="account.set($event)"
+          className="w-[140px]"
+        />
+      </div>
+
+      <div
+        class="flex items-center justify-between gap-2 border-y border-border px-4 py-3"
+      >
+        <h2 class="text-base font-semibold text-foreground">Posts</h2>
+        <app-filter-select
+          controlId="comments-sort"
+          label="Tri"
+          [options]="sortOptions"
+          [value]="sort()"
+          (valueChange)="sort.set($event)"
+          className="w-[140px]"
+        />
+      </div>
+
+      @if (query.isPending()) {
+        <div class="space-y-3 p-4">
+          @for (i of [0, 1, 2]; track i) {
+            <app-skeleton className="h-14 w-full" />
+          }
+        </div>
+      } @else if (query.isError()) {
+        <div class="p-4">
+          <app-error-state
+            title="Publications indisponibles"
+            description="La liste des publications n’a pas pu être chargée."
+            (retry)="query.refetch()"
+          />
+        </div>
+      } @else if (hasPosts()) {
+        <ul class="min-h-0 flex-1 divide-y divide-border-soft overflow-y-auto">
+          @for (post of posts(); track post.id) {
+            <li>
+              <button
+                type="button"
+                (click)="selected.set(post)"
+                [attr.aria-current]="selected()?.id === post.id ? 'true' : null"
+                class="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                [class.bg-card]="selected()?.id === post.id"
+              >
+                <span
+                  class="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border-soft bg-card"
+                >
+                  @if (post.mediaUrl) {
+                    <img
+                      [src]="post.mediaUrl"
+                      alt=""
+                      class="size-full object-cover"
+                      loading="lazy"
+                    />
+                  } @else {
+                    <lucide-icon
+                      [img]="NoImageIcon"
+                      class="size-4 text-subtle"
+                      aria-hidden="true"
+                    />
+                  }
+                </span>
+
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-sm font-medium text-foreground">
+                    {{ titleOf(post) }}
+                  </span>
+                  <span class="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
+                    <app-platform-icon
+                      [platform]="post.platform.toLowerCase()"
+                      className="size-3.5"
+                    />
+                    {{ platformLabel(post.platform) }}
+                  </span>
+                </span>
+
+                <span class="shrink-0 text-xs text-subtle">
+                  {{ formatDate(post.publishedAt ?? post.createdAt) }}
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="flex-1 px-4 py-10 text-center text-sm text-muted">
+          Aucune publication publiée pour le moment
+        </p>
+      }
+    </div>
+
+    <!-- ── Panneau détail : APERÇU ───────────────────────────────────────── -->
+    <div inboxDetail class="flex h-full flex-col">
+      <div class="flex flex-wrap items-center gap-2 border-b border-border px-5 py-4">
+        <h2 class="text-base font-semibold text-foreground">
+          {{ selected() ? titleOf(selected()!) : 'Select a post' }}
+        </h2>
+        @if (selected()) {
+          <app-preview-badge />
+        }
+      </div>
+
+      <div class="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
+        @if (!selected()) {
+          <p class="text-sm text-muted">Select a post to view comments</p>
+        } @else {
+          <p class="text-sm font-medium text-foreground">
+            Comments are not yet synchronized with Rezouette.
+          </p>
+          <p class="max-w-sm text-sm text-muted">
+            Cette publication est réelle, mais aucun endpoint ne permet encore de
+            récupérer ses commentaires. Aucun commentaire d’exemple n’est affiché
+            ici, pour qu’il soit impossible de le prendre pour un vrai.
+          </p>
+        }
+      </div>
+    </div>
+  </app-inbox-split-layout>
+</div>

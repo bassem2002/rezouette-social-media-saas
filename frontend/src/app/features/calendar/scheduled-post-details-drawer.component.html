@@ -1,0 +1,142 @@
+<app-drawer [open]="post() !== null" (close)="close.emit()" title="Publication programmée">
+  @if (post(); as p) {
+    <div class="space-y-5">
+      <div class="flex flex-wrap items-center gap-2">
+        @for (platform of p.platforms; track platform) {
+          <app-platform-badge [platform]="platform" />
+        }
+        <app-scheduled-status-badge [status]="p.status" />
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-muted">Programmée pour</p>
+        <div class="mt-1 text-sm text-foreground">{{ formatDateTime(p.scheduledAt) }}</div>
+      </div>
+
+      @if (p.message) {
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wide text-muted">Message (Facebook)</p>
+          <div class="mt-1 text-sm text-foreground"><span class="whitespace-pre-wrap">{{ p.message }}</span></div>
+        </div>
+      }
+
+      @if (p.caption) {
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wide text-muted">Légende (Instagram / TikTok)</p>
+          <div class="mt-1 text-sm text-foreground"><span class="whitespace-pre-wrap">{{ p.caption }}</span></div>
+        </div>
+      }
+
+      @if (p.imageUrl) {
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wide text-muted">Image</p>
+          <div class="mt-1 text-sm text-foreground">
+            <a
+              [href]="p.imageUrl"
+              target="_blank"
+              rel="noreferrer"
+              class="inline-flex items-center gap-1 break-all text-primary hover:underline"
+            >
+              Ouvrir l'image
+              <lucide-icon [img]="ExternalLinkIcon" class="size-3.5" />
+            </a>
+          </div>
+        </div>
+      }
+
+      @if (youtubeOptions(); as yt) {
+        <div class="space-y-3 rounded-xl border border-border bg-card p-3">
+          <p class="text-xs font-medium uppercase tracking-wide text-muted">
+            Options YouTube
+          </p>
+          <div>
+            <p class="text-xs text-muted">Titre</p>
+            <p class="text-sm text-foreground">
+              {{ yt.title ?? 'Titre non renseigné' }}
+            </p>
+          </div>
+          @if (yt.description) {
+            <div>
+              <p class="text-xs text-muted">Description</p>
+              <p class="whitespace-pre-wrap text-sm text-foreground">{{ yt.description }}</p>
+            </div>
+          }
+          <div class="flex flex-wrap gap-2 text-xs">
+            <span class="rounded-full bg-muted-soft px-2 py-0.5 text-muted">
+              {{ privacyLabel(yt.privacyStatus) }}
+            </span>
+            <span class="rounded-full bg-muted-soft px-2 py-0.5 text-muted">
+              {{ kidsLabel(yt.madeForKids) }}
+            </span>
+          </div>
+          @if (yt.tags.length > 0) {
+            <p class="text-xs text-muted">Tags : {{ yt.tags.join(', ') }}</p>
+          }
+          <p class="rounded-lg bg-muted-soft px-3 py-2 text-xs text-muted">
+            Cette date déclenche le <strong>début de l’envoi</strong> vers YouTube.
+            La vidéo devient visible une fois son traitement terminé.
+          </p>
+        </div>
+      }
+
+      @if (p.videoUrl) {
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wide text-muted">Vidéo (TikTok / YouTube)</p>
+          <div class="mt-1 text-sm text-foreground">
+            <a
+              [href]="p.videoUrl"
+              target="_blank"
+              rel="noreferrer"
+              class="inline-flex items-center gap-1 break-all text-primary hover:underline"
+            >
+              Ouvrir la vidéo
+              <lucide-icon [img]="ExternalLinkIcon" class="size-3.5" />
+            </a>
+          </div>
+        </div>
+      }
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-muted">Traitée le</p>
+        <div class="mt-1 text-sm text-foreground">
+          {{ p.processedAt ? formatDateTime(p.processedAt) : '—' }}
+        </div>
+      </div>
+
+      @if (p.attempts > 0) {
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wide text-muted">Tentatives</p>
+          <div class="mt-1 text-sm text-foreground"><app-badge tone="muted">{{ p.attempts }}</app-badge></div>
+        </div>
+      }
+
+      @if (p.status === 'FAILED' && p.lastError) {
+        <div class="rounded-xl border border-error/30 bg-error-soft p-3">
+          <p class="text-sm font-medium text-[#b91c1c]">Erreur de publication</p>
+          <p class="mt-1 break-words text-sm text-foreground">{{ p.lastError }}</p>
+        </div>
+      }
+
+      @if (canCancel()) {
+        <div class="border-t border-border pt-4">
+          <app-button variant="danger" className="w-full" (click)="confirmOpen.set(true)">
+            <lucide-icon buttonIcon [img]="BanIcon" class="size-4" />
+            Annuler la publication
+          </app-button>
+        </div>
+      }
+    </div>
+  }
+</app-drawer>
+
+<app-confirm-dialog
+  [open]="confirmOpen()"
+  (close)="confirmOpen.set(false)"
+  (confirm)="handleCancel()"
+  title="Annuler la publication programmée ?"
+  description="Cette publication ne sera pas envoyée. L'action est définitive."
+  confirmLabel="Annuler la publication"
+  cancelLabel="Conserver"
+  [destructive]="true"
+  [loading]="cancelMutation.isPending()"
+/>

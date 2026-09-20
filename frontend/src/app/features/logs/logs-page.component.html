@@ -1,0 +1,219 @@
+<div class="space-y-4">
+  <app-frontend-preview-notice />
+
+  <div class="lg:grid lg:grid-cols-[248px_minmax(0,1fr)] lg:gap-6">
+    <!-- Panneau de filtres secondaire -->
+    <div>
+      <div class="flex items-center justify-between gap-2 lg:block">
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-semibold tracking-tight text-foreground">Logs</h1>
+          <app-badge tone="warning">{{ previewBadge }}</app-badge>
+        </div>
+
+        <!-- Repli du panneau sous `lg` : sur mobile, les filtres occuperaient
+             sinon tout l'écran avant le moindre résultat. -->
+        <button
+          type="button"
+          (click)="filtersOpen.set(!filtersOpen())"
+          [attr.aria-expanded]="filtersOpen()"
+          aria-controls="logs-filters"
+          class="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
+        >
+          <lucide-icon [img]="FiltersIcon" class="size-4" aria-hidden="true" />
+          Filters
+          @if (activeFilterCount() > 0) {
+            <span class="text-primary">({{ activeFilterCount() }})</span>
+          }
+        </button>
+      </div>
+
+      <aside
+        id="logs-filters"
+        class="mt-4 lg:mt-6 lg:block"
+        [class.hidden]="!filtersOpen()"
+      >
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-base font-semibold text-foreground">Filters</h2>
+          <button
+            type="button"
+            (click)="reset()"
+            class="rounded-md px-2 py-1 text-xs font-medium text-muted transition-colors duration-150 hover:bg-muted-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            Reset
+          </button>
+        </div>
+
+        <div class="mt-4">
+          <p class="mb-1.5 text-sm font-medium text-foreground">Timeline</p>
+          <app-filter-select
+            controlId="logs-timeline"
+            label="Période"
+            [options]="timelines"
+            [value]="timeline()"
+            (valueChange)="timeline.set($event)"
+            className="w-full"
+          />
+        </div>
+
+        <fieldset class="mt-5 border-t border-border-soft pt-4">
+          <legend class="mb-2 text-sm font-medium text-foreground">Status</legend>
+          <div class="space-y-2">
+            @for (status of statuses; track status.value) {
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-muted">
+                <input
+                  type="checkbox"
+                  [checked]="isStatusSelected(status.value)"
+                  (change)="toggleStatus(status.value)"
+                  class="size-4 shrink-0 rounded border-border accent-[var(--rz-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                />
+                {{ status.label }}
+              </label>
+            }
+          </div>
+        </fieldset>
+
+        <fieldset class="mt-5 border-t border-border-soft pt-4">
+          <legend class="mb-2 text-sm font-medium text-foreground">Type</legend>
+          <div class="space-y-2">
+            @for (type of types; track type.value) {
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-muted">
+                <input
+                  type="checkbox"
+                  [checked]="isTypeSelected(type.value)"
+                  (change)="toggleType(type.value)"
+                  class="size-4 shrink-0 rounded border-border accent-[var(--rz-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                />
+                {{ type.label }}
+              </label>
+            }
+          </div>
+        </fieldset>
+
+        <!-- Facettes annoncées mais sans critère disponible : le panneau les
+             expose repliées et dit pourquoi, plutôt que d'offrir des cases
+             inopérantes. -->
+        @for (facet of facets; track facet.id) {
+          <div class="mt-1 border-t border-border-soft">
+            <button
+              type="button"
+              (click)="toggleFacet(facet.id)"
+              [attr.aria-expanded]="isFacetOpen(facet.id)"
+              [attr.aria-controls]="'facet-' + facet.id"
+              class="flex w-full items-center gap-2 py-3 text-left text-sm font-medium text-foreground transition-colors duration-150 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <lucide-icon
+                [img]="ChevronRightIcon"
+                class="size-4 text-subtle transition-transform duration-150"
+                [class.rotate-90]="isFacetOpen(facet.id)"
+                aria-hidden="true"
+              />
+              {{ facet.label }}
+            </button>
+            @if (isFacetOpen(facet.id)) {
+              <p [id]="'facet-' + facet.id" class="pb-3 pl-6 text-xs text-subtle">
+                Aucun critère disponible tant que le service d’audit n’est pas
+                connecté.
+              </p>
+            }
+          </div>
+        }
+      </aside>
+    </div>
+
+    <!-- Zone principale -->
+    <div class="mt-6 min-w-0 lg:mt-0">
+      <div class="flex flex-wrap items-center gap-2">
+        <app-search-bar
+          [value]="search()"
+          (valueChange)="search.set($event)"
+          placeholder="Search logs…"
+          ariaLabel="Rechercher dans les journaux"
+          className="min-w-0 flex-1"
+        />
+
+        <button
+          type="button"
+          (click)="toggleLive()"
+          [attr.aria-pressed]="live()"
+          class="inline-flex h-10 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <span
+            class="size-2 rounded-full"
+            [class]="live() ? 'bg-success' : 'bg-subtle'"
+            aria-hidden="true"
+          ></span>
+          Live
+          <span class="sr-only">{{ live() ? '— activé (simulé)' : '— désactivé' }}</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="refresh()"
+          aria-label="Actualiser les journaux"
+          class="inline-flex size-10 items-center justify-center rounded-md border border-border bg-surface text-muted transition-colors duration-150 hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <lucide-icon [img]="RefreshIcon" class="size-4" />
+        </button>
+
+        <button
+          type="button"
+          (click)="download()"
+          aria-label="Exporter les journaux"
+          class="inline-flex size-10 items-center justify-center rounded-md border border-border bg-surface text-muted transition-colors duration-150 hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <lucide-icon [img]="DownloadIcon" class="size-4" />
+        </button>
+      </div>
+
+      <div class="mt-4 overflow-x-auto rounded-xl border border-border bg-surface">
+        <table class="w-full border-collapse text-sm">
+          <caption class="sr-only">
+            Journaux système — aucun enregistrement disponible
+          </caption>
+          <thead>
+            <tr class="border-b border-border bg-card">
+              <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Time</th>
+              <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Status</th>
+              <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Activity</th>
+              <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Platform</th>
+              <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Duration</th>
+              <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr class="border-b border-border last:border-0">
+                <td class="whitespace-nowrap px-4 py-3 text-muted">{{ row.time }}</td>
+                <td class="whitespace-nowrap px-4 py-3">
+                  <app-badge tone="muted">{{ row.status }}</app-badge>
+                </td>
+                <td class="whitespace-nowrap px-4 py-3 text-foreground">{{ row.activity }}</td>
+                <td class="whitespace-nowrap px-4 py-3 text-muted">{{ row.platform }}</td>
+                <td class="whitespace-nowrap px-4 py-3 text-muted">{{ row.duration }}</td>
+                <td class="px-4 py-3 text-muted">{{ row.message }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="px-4 py-20 text-center">
+                  <span
+                    class="mx-auto flex size-12 items-center justify-center rounded-xl bg-card text-subtle"
+                  >
+                    <lucide-icon [img]="FileIcon" class="size-6" aria-hidden="true" />
+                  </span>
+                  <p class="mt-3 text-base font-semibold text-foreground">
+                    No logs found
+                  </p>
+                  <p class="mt-1 text-sm text-muted">No logs in this time range</p>
+                  <p class="mx-auto mt-2 max-w-sm text-xs text-subtle">
+                    Les logs système apparaîtront ici lorsque le service d’audit
+                    sera connecté.
+                  </p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

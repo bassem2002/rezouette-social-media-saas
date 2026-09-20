@@ -1,0 +1,51 @@
+<div class="space-y-6">
+  <app-page-header
+    title="Analytics"
+    description="Performance, répartition et activité de vos publications."
+  />
+
+  @if (isLoading()) {
+    <app-loading-state label="Calcul des statistiques…" />
+  } @else if (isError()) {
+    <app-error-state (retry)="refetchAll()" />
+  } @else {
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <app-stat-card label="Publications" [value]="overview.data()?.total ?? 0" emphasis="primary" />
+      <app-stat-card label="Succès" [value]="overview.data()?.published ?? 0" emphasis="success" />
+      <app-stat-card label="Échecs" [value]="overview.data()?.failed ?? 0" emphasis="error" />
+      <app-stat-card label="Programmées" [value]="overview.data()?.scheduled ?? 0" emphasis="primary" />
+      <app-stat-card label="Taux de réussite" [value]="successRate()" emphasis="success" />
+    </div>
+
+    <app-card>
+      <app-card-header><app-card-title>Publications par jour (30 derniers jours)</app-card-title></app-card-header>
+      <app-card-content>
+        <app-bar-chart [data]="dailySeries()" [color]="primaryColor" height="h-56" />
+      </app-card-content>
+    </app-card>
+
+    <div class="grid gap-4 lg:grid-cols-2">
+      <app-card>
+        <app-card-header><app-card-title>Répartition par plateforme</app-card-title></app-card-header>
+        <app-card-content>
+          <app-donut-chart [data]="platformSeries()" centerLabel="Posts" />
+          @if (missingBreakdownNotice()) {
+            <p class="mt-3 text-xs text-muted" role="note">
+              {{ missingBreakdownNotice() }}
+            </p>
+          }
+        </app-card-content>
+      </app-card>
+
+      <app-card>
+        <app-card-header><app-card-title>Publications programmées</app-card-title></app-card-header>
+        <app-card-content><app-donut-chart [data]="scheduledSeries()" centerLabel="Planifiées" /></app-card-content>
+      </app-card>
+    </div>
+
+    <app-card>
+      <app-card-header><app-card-title>Répartition des erreurs (par raison Meta)</app-card-title></app-card-header>
+      <app-card-content><app-hbar-chart [data]="errorSeries()" emptyLabel="Aucune erreur 🎉" /></app-card-content>
+    </app-card>
+  }
+</div>

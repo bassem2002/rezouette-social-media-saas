@@ -1,0 +1,15 @@
+<app-card [className]="cardClasses()">
+  <div role="alert" class="flex flex-col items-center gap-3">
+    <span class="flex size-12 items-center justify-center rounded-xl bg-error-soft text-[#b91c1c]">
+      <lucide-icon [img]="AlertIcon" class="size-6" />
+    </span>
+    <div>
+      <p class="text-base font-semibold text-foreground">{{ title() }}</p>
+      <p class="mx-auto mt-1 max-w-sm text-sm text-muted">{{ description() }}</p>
+    </div>
+    <app-button variant="secondary" (click)="retry.emit()">
+      <lucide-icon buttonIcon [img]="RefreshIcon" class="size-4" />
+      Réessayer
+    </app-button>
+  </div>
+</app-card>

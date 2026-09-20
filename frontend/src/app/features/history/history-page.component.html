@@ -1,0 +1,117 @@
+<div class="space-y-6">
+  <app-page-header title="Historique" description="Toutes vos publications et leur statut.">
+    <app-button pageActions variant="secondary" size="sm" (click)="goToPublication()">
+      <lucide-icon buttonIcon [img]="SendIcon" class="size-4" />
+      Nouvelle publication
+    </app-button>
+  </app-page-header>
+
+  <app-card className="p-4">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <app-search-bar
+        [value]="search()"
+        (valueChange)="onSearch($event)"
+        placeholder="Rechercher (texte, erreur, ID…)"
+        className="sm:max-w-sm"
+      />
+      <div class="relative sm:w-48">
+        <select
+          appSelect
+          aria-label="Filtrer par plateforme"
+          [value]="platform()"
+          (change)="onPlatformChange($event)"
+        >
+          <option value="all">Toutes les plateformes</option>
+          <option value="facebook">Facebook</option>
+          <option value="instagram">Instagram</option>
+          <option value="tiktok">TikTok</option>
+          <option value="linkedin">LinkedIn</option>
+          <option value="youtube">YouTube</option>
+        </select>
+        <lucide-icon
+          [img]="ChevronDownIcon"
+          class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted"
+        />
+      </div>
+    </div>
+  </app-card>
+
+  @if (query.isPending()) {
+    <app-loading-state label="Chargement de l'historique…" />
+  } @else if (query.isError()) {
+    <app-error-state (retry)="query.refetch()" />
+  } @else if (isEmpty()) {
+    <app-empty-state
+      [icon]="InboxIcon"
+      title="Aucune publication"
+      description="Vos publications apparaîtront ici dès que vous en aurez créé une."
+    >
+      <app-button emptyAction (click)="goToPublication()">
+        <lucide-icon buttonIcon [img]="SendIcon" class="size-4" />
+        Créer une publication
+      </app-button>
+    </app-empty-state>
+  } @else if (filtered().length === 0) {
+    <app-empty-state
+      title="Aucun résultat"
+      description="Aucune publication ne correspond à votre recherche ou à ce filtre."
+    />
+  } @else {
+    <div class="space-y-4">
+      <div class="overflow-x-auto rounded-xl border border-border">
+        <table class="w-full border-collapse text-sm">
+          <caption class="sr-only">Historique des publications</caption>
+          <thead>
+            <tr class="border-b border-border bg-card">
+              <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Date</th>
+              <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Plateforme</th>
+              <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Statut</th>
+              <th scope="col" class="hidden whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted md:table-cell">Post ID</th>
+              <th scope="col" class="hidden whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted lg:table-cell">Message d'erreur</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of pageRows(); track p.id) {
+              <tr
+                (click)="selected.set(p)"
+                (keydown.enter)="selected.set(p)"
+                tabindex="0"
+                class="cursor-pointer border-b border-border bg-white transition-colors duration-150 last:border-0 hover:bg-card focus-visible:bg-card focus-visible:outline-none"
+              >
+                <td class="px-4 py-3 text-foreground">
+                  <span class="whitespace-nowrap text-muted">{{ formatDateTime(p.createdAt) }}</span>
+                </td>
+                <td class="px-4 py-3 text-foreground"><app-platform-badge [platform]="p.platform" /></td>
+                <td class="px-4 py-3 text-foreground">
+                  <app-status-badge [status]="p.status" />
+                  @if (youtubePendingLabel(p); as pendingLabel) {
+                    <!-- Ni « programmée », ni « publiée » : l'identifiant de
+                         tâche n'est jamais affiché, seul son sens l'est. -->
+                    <p class="mt-1 text-xs text-muted">{{ pendingLabel }}</p>
+                  }
+                </td>
+                <td class="hidden px-4 py-3 text-foreground md:table-cell">
+                  @if (p.externalPostId) {
+                    <span class="font-mono text-xs text-muted">{{ p.externalPostId }}</span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td class="hidden px-4 py-3 text-foreground lg:table-cell">
+                  @if (p.errorMessage) {
+                    <span class="line-clamp-1 max-w-xs text-[#b91c1c]">{{ p.errorMessage }}</span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-pagination [page]="safePage()" [pageCount]="pageCount()" (pageChange)="page.set($event)" />
+    </div>
+  }
+
+  <app-post-details-drawer [post]="selected()" (close)="selected.set(null)" />
+</div>

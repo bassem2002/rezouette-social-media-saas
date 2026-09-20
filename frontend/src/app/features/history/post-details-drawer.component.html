@@ -1,0 +1,99 @@
+<app-drawer [open]="post() !== null" (close)="close.emit()" title="Détail de la publication">
+  @if (post(); as p) {
+    <div class="space-y-5">
+      <div class="flex flex-wrap items-center gap-2">
+        <app-platform-badge [platform]="p.platform" />
+        <app-status-badge [status]="p.status" />
+        @if (p.retryable) {
+          <app-badge tone="warning">Réessayable</app-badge>
+        }
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-muted">Créé le</p>
+        <div class="mt-1 text-sm text-foreground">{{ formatDateTime(p.createdAt) }}</div>
+      </div>
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-muted">Publié le</p>
+        <div class="mt-1 text-sm text-foreground">{{ formatDateTime(p.publishedAt) }}</div>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-muted">Post ID externe</p>
+        <div class="mt-1 text-sm text-foreground">
+          @if (p.externalPostId) {
+            <span class="break-all font-mono text-xs">{{ p.externalPostId }}</span>
+          } @else {
+            —
+          }
+        </div>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase tracking-wide text-muted">Contenu</p>
+        <div class="mt-1 text-sm text-foreground">
+          @if (p.caption) {
+            <span class="whitespace-pre-wrap">{{ p.caption }}</span>
+          } @else {
+            <span class="text-muted">—</span>
+          }
+        </div>
+      </div>
+
+      @if (p.mediaUrl) {
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wide text-muted">Média</p>
+          <div class="mt-1 text-sm text-foreground">
+            <a
+              [href]="p.mediaUrl"
+              target="_blank"
+              rel="noreferrer"
+              class="inline-flex items-center gap-1 break-all text-primary hover:underline"
+            >
+              Ouvrir l'image
+              <lucide-icon [img]="ExternalLinkIcon" class="size-3.5" />
+            </a>
+          </div>
+        </div>
+      }
+
+      @if (p.platform === 'YOUTUBE' && p.status === 'PENDING') {
+        <div class="rounded-xl border border-warning/30 bg-warning-soft p-3">
+          @if (p.publishId) {
+            <p class="text-sm font-medium text-warning">Traitement YouTube en cours</p>
+            <p class="mt-1 text-sm text-foreground">
+              La vidéo a été reçue par YouTube, qui l’encode actuellement. Elle
+              deviendra visible une fois ce traitement terminé — l’état est
+              actualisé automatiquement.
+            </p>
+          } @else {
+            <p class="text-sm font-medium text-warning">Publication YouTube en attente</p>
+            <p class="mt-1 text-sm text-foreground">
+              L’envoi vers YouTube n’a pas encore abouti. L’état sera actualisé
+              automatiquement.
+            </p>
+          }
+        </div>
+      }
+
+      @if (p.status === 'FAILED') {
+        <div class="rounded-xl border border-error/30 bg-error-soft p-3">
+          <p class="text-sm font-medium text-[#b91c1c]">Erreur de publication</p>
+          @if (p.platform === 'YOUTUBE') {
+            <!-- Raison YouTube traduite ; le code brut reste en second plan. -->
+            <p class="mt-1 break-words text-sm text-foreground">
+              {{ youtubeErrorLabel(p.metaReason, p.errorMessage) }}
+            </p>
+          } @else if (p.errorMessage) {
+            <p class="mt-1 break-words text-sm text-foreground">{{ p.errorMessage }}</p>
+          }
+          <div class="mt-2 flex flex-wrap gap-2 text-xs text-muted">
+            @if (p.metaReason) { <span>Raison : {{ p.metaReason }}</span> }
+            @if (p.metaCode !== null) { <span>Code : {{ p.metaCode }}</span> }
+            @if (p.metaSubcode !== null) { <span>Subcode : {{ p.metaSubcode }}</span> }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</app-drawer>

@@ -1,0 +1,45 @@
+<div>
+  <input
+    #fileInput
+    type="file"
+    [accept]="acceptAttr()"
+    class="hidden"
+    (change)="onInputChange($event)"
+  />
+
+  @if (preview()) {
+    <div class="space-y-3">
+      <app-image-preview-card
+        [src]="preview()!"
+        [filename]="meta()?.name"
+        [size]="meta()?.size"
+        [uploaded]="status() === 'success'"
+        [isVideo]="isVideo()"
+        (remove)="remove()"
+      />
+      @if (status() === 'uploading') {
+        <app-upload-progress [percent]="progress()" />
+      }
+    </div>
+  } @else {
+    <div
+      role="button"
+      tabindex="0"
+      aria-label="Ajouter un média par glisser-déposer ou sélection de fichier"
+      (click)="openPicker()"
+      (keydown)="onKeyDown($event)"
+      (dragover)="onDragOver($event)"
+      (dragleave)="dragging.set(false)"
+      (drop)="onDrop($event)"
+      [class]="dropzoneClasses()"
+    >
+      <lucide-icon [img]="UploadIcon" class="size-7 text-muted" />
+      <p class="text-sm font-medium text-foreground">{{ dropzoneTitle() }}</p>
+      <p class="text-xs text-muted">{{ dropzoneHint() }}</p>
+    </div>
+  }
+
+  @if (displayError()) {
+    <p class="mt-1.5 text-sm text-error">{{ displayError() }}</p>
+  }
+</div>

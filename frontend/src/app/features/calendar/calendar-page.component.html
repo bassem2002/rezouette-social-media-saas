@@ -1,0 +1,69 @@
+<div class="space-y-6">
+  <app-page-header title="Calendrier" description="Vos publications programmées, mois par mois.">
+    <app-button pageActions (click)="goToPublication()">
+      <lucide-icon buttonIcon [img]="CalendarPlusIcon" class="size-4" />
+      Programmer
+    </app-button>
+  </app-page-header>
+
+  @if (query.isPending()) {
+    <app-loading-state label="Chargement du calendrier…" />
+  } @else if (query.isError()) {
+    <app-error-state (retry)="query.refetch()" />
+  } @else {
+    <app-card className="overflow-hidden p-0">
+      <div class="flex items-center justify-between gap-3 border-b border-border p-4">
+        <h2 class="text-base font-semibold capitalize text-foreground">
+          {{ monthLabelText() }}
+        </h2>
+        <div class="flex items-center gap-2">
+          <app-button variant="secondary" size="sm" (click)="goToday()">Aujourd'hui</app-button>
+          <app-button variant="secondary" size="icon" (click)="goToMonth(-1)">
+            <lucide-icon [img]="ChevronLeftIcon" class="size-4" />
+          </app-button>
+          <app-button variant="secondary" size="icon" (click)="goToMonth(1)">
+            <lucide-icon [img]="ChevronRightIcon" class="size-4" />
+          </app-button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-7 border-b border-border bg-muted-soft/40">
+        @for (day of weekdays; track day) {
+          <div class="px-2 py-2 text-center text-xs font-medium text-muted">{{ day }}</div>
+        }
+      </div>
+
+      <div class="grid grid-cols-7">
+        @for (cell of cells(); track cell.key) {
+          <div [class]="cellClasses(cell.inMonth)">
+            <div class="mb-1 flex justify-end">
+              <span [class]="dateBadgeClasses(cell.isToday, cell.inMonth)">{{ cell.date.getDate() }}</span>
+            </div>
+            <div class="space-y-1">
+              @for (post of cell.posts.slice(0, 3); track post.id) {
+                <button
+                  type="button"
+                  (click)="selected.set(post)"
+                  [title]="postTime(post.scheduledAt) + ' · ' + post.platforms.join(', ')"
+                  [class]="chipClasses(post.status)"
+                >
+                  <span class="tabular-nums">{{ postTime(post.scheduledAt) }}</span>
+                  <span class="flex items-center gap-0.5">
+                    @for (p of post.platforms; track p) {
+                      <app-platform-icon [platform]="p" className="size-3" />
+                    }
+                  </span>
+                </button>
+              }
+              @if (cell.posts.length > 3) {
+                <p class="px-1 text-[11px] text-muted">+{{ cell.posts.length - 3 }} autre(s)</p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </app-card>
+  }
+
+  <app-scheduled-post-details-drawer [post]="selected()" (close)="selected.set(null)" />
+</div>

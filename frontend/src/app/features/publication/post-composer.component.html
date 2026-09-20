@@ -1,0 +1,273 @@
+<div class="grid gap-5 lg:grid-cols-5">
+  <app-card className="lg:col-span-3">
+    <app-card-header><app-card-title>Nouveau post</app-card-title></app-card-header>
+    <app-card-content>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
+        <!-- Plateformes -->
+        <fieldset>
+          <legend class="mb-1.5 block text-sm font-medium text-foreground">Plateformes</legend>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" role="checkbox" [attr.aria-checked]="values().facebook" (click)="togglePlatform('facebook')" [class]="toggleClasses(values().facebook)">
+              <app-platform-icon platform="facebook" className="size-4 text-primary" />
+              Facebook
+              @if (values().facebook) { <lucide-icon [img]="CheckIcon" class="size-4" /> }
+            </button>
+            <button type="button" role="checkbox" [attr.aria-checked]="values().instagram" (click)="togglePlatform('instagram')" [class]="toggleClasses(values().instagram)">
+              <app-platform-icon platform="instagram" className="size-4 text-warning" />
+              Instagram
+              @if (values().instagram) { <lucide-icon [img]="CheckIcon" class="size-4" /> }
+            </button>
+            <button type="button" role="checkbox" [attr.aria-checked]="values().tiktok" (click)="togglePlatform('tiktok')" [class]="toggleClasses(values().tiktok)">
+              <app-platform-icon platform="tiktok" className="size-4 text-foreground" />
+              TikTok
+              @if (values().tiktok) { <lucide-icon [img]="CheckIcon" class="size-4" /> }
+            </button>
+            <button
+              type="button"
+              role="checkbox"
+              [attr.aria-checked]="values().linkedin"
+              [disabled]="linkedinDisabled()"
+              (click)="togglePlatform('linkedin')"
+              [class]="toggleClasses(values().linkedin)"
+              [class.opacity-50]="linkedinDisabled()"
+              [class.cursor-not-allowed]="linkedinDisabled()"
+              [attr.title]="linkedinHint() || null"
+            >
+              <app-platform-icon platform="linkedin" className="size-4 text-primary" />
+              LinkedIn
+              @if (values().linkedin) { <lucide-icon [img]="CheckIcon" class="size-4" /> }
+            </button>
+            <button
+              type="button"
+              role="checkbox"
+              [attr.aria-checked]="values().youtube"
+              [disabled]="youtubeDisabled()"
+              (click)="togglePlatform('youtube')"
+              [class]="toggleClasses(values().youtube)"
+              [class.opacity-50]="youtubeDisabled()"
+              [class.cursor-not-allowed]="youtubeDisabled()"
+              [attr.title]="youtubeHint() || null"
+            >
+              <app-platform-icon platform="youtube" className="size-4 text-error" />
+              YouTube
+              @if (values().youtube) { <lucide-icon [img]="CheckIcon" class="size-4" /> }
+            </button>
+          </div>
+          @if (errors().facebook) {
+            <p class="mt-1.5 text-sm text-error">{{ errors().facebook }}</p>
+          }
+          @if (linkedinHint()) {
+            <p class="mt-1.5 text-xs text-muted">{{ linkedinHint() }}</p>
+          }
+          @if (errors().linkedin) {
+            <p class="mt-1.5 text-sm text-error">{{ errors().linkedin }}</p>
+          }
+          @if (youtubeHint()) {
+            <p class="mt-1.5 text-xs text-muted">{{ youtubeHint() }}</p>
+          }
+        </fieldset>
+
+        <!-- Message Facebook -->
+        <div>
+          <app-label htmlFor="message">Message (Facebook)</app-label>
+          <textarea
+            id="message"
+            appTextarea
+            formControlName="message"
+            placeholder="Rédigez votre message Facebook…"
+            [invalid]="!!errors().message"
+          ></textarea>
+          <p [class]="counterClasses(values().message.length, MESSAGE_MAX)">
+            {{ values().message.length }}/{{ MESSAGE_MAX }}
+          </p>
+          @if (errors().message) {
+            <p class="text-sm text-error">{{ errors().message }}</p>
+          }
+        </div>
+
+        <!-- Caption Instagram / TikTok -->
+        <div>
+          <app-label htmlFor="caption">Légende (Instagram / TikTok)</app-label>
+          <textarea
+            id="caption"
+            appTextarea
+            formControlName="caption"
+            placeholder="Rédigez votre légende Instagram / TikTok…"
+            [invalid]="!!errors().caption"
+          ></textarea>
+          <p [class]="counterClasses(values().caption.length, CAPTION_MAX)">
+            {{ values().caption.length }}/{{ CAPTION_MAX }}
+          </p>
+          @if (errors().caption) {
+            <p class="text-sm text-error">{{ errors().caption }}</p>
+          }
+        </div>
+
+        <!-- Image (Facebook / Instagram / LinkedIn) -->
+        @if (values().facebook || values().instagram || values().linkedin) {
+          <div>
+            <app-label>Image{{ values().instagram ? ' (requise pour Instagram)' : ' (optionnelle)' }}</app-label>
+            <app-image-uploader
+              [value]="values().imageUrl"
+              [error]="errors().imageUrl"
+              (valueChange)="setImageUrl($event)"
+              (uploadingChange)="imageUploading.set($event)"
+            />
+          </div>
+        }
+
+        <!-- Lien / article (LinkedIn — publication immédiate uniquement) -->
+        @if (values().linkedin) {
+          <div>
+            <app-label htmlFor="linkUrl">Lien / article (LinkedIn, optionnel)</app-label>
+            <input
+              id="linkUrl"
+              appInput
+              type="url"
+              formControlName="linkUrl"
+              placeholder="https://exemple.com/article"
+              [invalid]="!!errors().linkUrl"
+            />
+            <p class="mt-1 text-xs text-muted">
+              LinkedIn ne récupère pas l’aperçu : le titre/description ne sont pas requis ici.
+              Le lien n’est pris en charge qu’en publication immédiate.
+            </p>
+            @if (errors().linkUrl) {
+              <p class="text-sm text-error">{{ errors().linkUrl }}</p>
+            }
+          </div>
+        }
+
+        <!-- Vidéo (TikTok / YouTube) — le même fichier sert aux deux réseaux -->
+        @if (values().tiktok || values().youtube) {
+          <div>
+            <app-label>
+              Vidéo (requise pour
+              {{ values().tiktok && values().youtube ? 'TikTok et YouTube' : (values().tiktok ? 'TikTok' : 'YouTube') }})
+            </app-label>
+            <app-image-uploader
+              kind="video"
+              [value]="values().videoUrl"
+              [error]="errors().videoUrl"
+              (valueChange)="setVideoUrl($event)"
+              (uploadingChange)="videoUploading.set($event)"
+            />
+          </div>
+        }
+
+        <!-- Options YouTube -->
+        @if (values().youtube) {
+          <app-youtube-options
+            [form]="form"
+            [errors]="errors()"
+            [channels]="youtubeChannels()"
+            [loading]="youtubeLoading()"
+            [notConfigured]="youtubeNotConfigured()"
+            [mode]="mode()"
+          />
+        }
+
+        <!-- Mode d'envoi -->
+        <fieldset class="border-t border-border pt-4">
+          <legend class="mb-1.5 block text-sm font-medium text-foreground">Quand publier ?</legend>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" role="radio" [attr.aria-checked]="mode() === 'now'" (click)="mode.set('now')" [class]="toggleClasses(mode() === 'now')">
+              <lucide-icon [img]="ZapIcon" class="size-4" />
+              Publier maintenant
+            </button>
+            <button type="button" role="radio" [attr.aria-checked]="mode() === 'schedule'" (click)="mode.set('schedule')" [class]="toggleClasses(mode() === 'schedule')">
+              <lucide-icon [img]="CalendarClockIcon" class="size-4" />
+              Programmer
+            </button>
+          </div>
+
+          @if (mode() === 'schedule') {
+            <div class="mt-3">
+              <app-label htmlFor="scheduledAt">Date et heure de publication</app-label>
+              <input
+                id="scheduledAt"
+                appInput
+                type="datetime-local"
+                [min]="minScheduledAt"
+                [value]="scheduledAt()"
+                [invalid]="!!scheduledError()"
+                (input)="onScheduledAtInput($event)"
+              />
+              @if (scheduledError()) {
+                <p class="mt-1 text-sm text-error">{{ scheduledError() }}</p>
+              }
+            </div>
+          }
+        </fieldset>
+
+        <div class="flex items-center justify-end gap-3 border-t border-border pt-4">
+          <app-button type="submit" [loading]="submitting()" [disabled]="uploading()">
+            @if (mode() === 'schedule') {
+              <lucide-icon buttonIcon [img]="CalendarClockIcon" class="size-4" />
+            } @else {
+              <lucide-icon buttonIcon [img]="SendIcon" class="size-4" />
+            }
+            {{ submitLabel() }}
+          </app-button>
+        </div>
+      </form>
+
+      @if (results()) {
+        <div class="mt-5">
+          <p class="mb-2 text-sm font-medium text-foreground">Résultats</p>
+          <ul class="space-y-2">
+            @for (r of results(); track r.platform) {
+              <li class="flex items-start gap-3 rounded-xl border border-border bg-white p-3">
+                @if (r.success) {
+                  <lucide-icon [img]="CheckIcon" class="mt-0.5 size-4 shrink-0 text-success" />
+                } @else {
+                  <lucide-icon [img]="XIcon" class="mt-0.5 size-4 shrink-0 text-error" />
+                }
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2">
+                    <app-platform-badge [platform]="r.platform" />
+                    <span [class]="r.success ? 'text-sm font-medium text-[#15803d]' : 'text-sm font-medium text-[#b91c1c]'">
+                      {{ r.success ? (r.processing ? 'Envoyé — traitement en cours' : 'Publié') : 'Échec' }}
+                    </span>
+                  </div>
+                  @if (r.success && r.processing) {
+                    <p class="mt-1 text-xs text-muted">
+                      Vidéo envoyée. Le traitement YouTube est en cours — suivez-le
+                      dans l’Historique.
+                    </p>
+                  } @else if (r.success) {
+                    <p class="mt-1 break-all text-xs text-muted">ID : {{ r.externalPostId }}</p>
+                  } @else {
+                    <p class="mt-1 text-xs text-muted">
+                      {{ r.error }}{{ r.action ? ' · Action : ' + r.action : '' }}
+                    </p>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </app-card-content>
+  </app-card>
+
+  <div class="lg:col-span-2">
+    <app-post-preview
+      [facebook]="values().facebook"
+      [instagram]="values().instagram"
+      [tiktok]="values().tiktok"
+      [linkedin]="values().linkedin"
+      [youtube]="values().youtube"
+      [message]="values().message"
+      [caption]="values().caption"
+      [imageUrl]="values().imageUrl.trim()"
+      [videoUrl]="values().videoUrl.trim()"
+      [linkUrl]="values().linkUrl.trim()"
+      [youtubeTitle]="values().youtubeTitle"
+      [youtubeDescription]="values().youtubeDescription"
+      [youtubeTags]="previewYouTubeTags()"
+      [youtubePrivacyStatus]="values().youtubePrivacyStatus"
+      [youtubeMadeForKids]="values().youtubeMadeForKids"
+    />
+  </div>
+</div>

@@ -1,0 +1,220 @@
+<div class="space-y-5">
+  <app-page-header
+    title="API Keys"
+    description="Authentication tokens for the programmatic API"
+  >
+    <app-badge titleBadge tone="warning">{{ previewBadge }}</app-badge>
+
+    <div pageActions class="flex items-center gap-2">
+      <app-button
+        size="sm"
+        className="rounded-md"
+        ariaHasPopup="dialog"
+        ariaControls="api-key-drawer"
+        [ariaExpanded]="createOpen()"
+        (click)="openCreate()"
+      >
+        <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+        Create key
+      </app-button>
+    </div>
+  </app-page-header>
+
+  <app-frontend-preview-notice />
+
+  <div class="flex flex-wrap items-center gap-2">
+    <app-search-bar
+      [value]="search()"
+      (valueChange)="search.set($event)"
+      placeholder="Search keys…"
+      ariaLabel="Rechercher une clé"
+      className="w-full sm:w-[240px]"
+    />
+    <app-filter-select
+      controlId="keys-status"
+      label="Statut"
+      [options]="statuses"
+      [value]="status()"
+      (valueChange)="status.set($event)"
+      className="w-[104px]"
+    />
+    <app-filter-select
+      controlId="keys-permission"
+      label="Permission"
+      [options]="permissions"
+      [value]="permission()"
+      (valueChange)="permission.set($event)"
+      className="w-[144px]"
+    />
+  </div>
+
+  @if (hasRows()) {
+    <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+      <table class="w-full border-collapse text-sm">
+        <caption class="sr-only">
+          Clés API — données de démonstration, aucune clé réelle
+        </caption>
+        <thead>
+          <tr class="border-b border-border bg-card">
+            <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Name</th>
+            <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Key</th>
+            <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Scope</th>
+            <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Status</th>
+            <th scope="col" class="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Permission</th>
+            <th scope="col" class="whitespace-nowrap px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (key of rows(); track key.id) {
+            <tr class="border-b border-border last:border-0">
+              <td class="px-4 py-3">
+                <p class="font-semibold text-foreground">{{ key.name }}</p>
+                <p class="text-xs text-subtle">{{ key.createdAt }}</p>
+              </td>
+              <td class="whitespace-nowrap px-4 py-3">
+                <span
+                  class="font-mono text-xs text-muted"
+                  title="Valeur fictive de démonstration — ce n’est pas une clé réelle."
+                >
+                  {{ key.maskedKey }}
+                </span>
+              </td>
+              <td class="whitespace-nowrap px-4 py-3 text-muted">{{ key.scope }}</td>
+              <td class="whitespace-nowrap px-4 py-3">
+                <app-badge tone="success">{{ key.status }}</app-badge>
+              </td>
+              <td class="whitespace-nowrap px-4 py-3">
+                <app-badge tone="success">{{ key.permission }}</app-badge>
+              </td>
+              <td class="whitespace-nowrap px-4 py-3 text-right">
+                <button
+                  type="button"
+                  (click)="pendingDelete.set(key)"
+                  [attr.aria-label]="'Supprimer la clé ' + key.name"
+                  class="inline-flex size-8 items-center justify-center rounded-md text-muted transition-colors duration-150 hover:bg-error-soft hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <lucide-icon [img]="TrashIcon" class="size-4" />
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="rounded-xl border border-dashed border-border bg-surface p-10 text-center">
+      <p class="text-sm font-medium text-foreground">
+        @if (isEmptied()) {
+          Aucune clé dans cet aperçu
+        } @else {
+          Aucune clé ne correspond à ces filtres
+        }
+      </p>
+      <p class="mx-auto mt-1 max-w-md text-sm text-muted">
+        @if (isEmptied()) {
+          La donnée de démonstration a été retirée de l’affichage. Rien n’a été
+          supprimé côté serveur : elle réapparaît au rechargement de la page.
+        } @else {
+          Ajustez la recherche ou les filtres pour retrouver la donnée d’exemple.
+        }
+      </p>
+      <button
+        type="button"
+        (click)="isEmptied() ? restore() : resetFilters()"
+        class="mt-2 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      >
+        @if (isEmptied()) {
+          Restaurer la donnée de démonstration
+        } @else {
+          Réinitialiser les filtres
+        }
+      </button>
+    </div>
+  }
+
+  <!-- Création : formulaire réel, effet simulé. Aucune clé n'est générée. -->
+  <app-drawer
+    [open]="createOpen()"
+    panelId="api-key-drawer"
+    title="Create API key"
+    description="Configure a new programmatic access token"
+    maxWidthClass="max-w-[520px]"
+    (close)="createOpen.set(false)"
+  >
+    <form [formGroup]="form" (ngSubmit)="submitCreate()" class="space-y-4">
+      <div>
+        <app-label htmlFor="key-name" [required]="true">Name</app-label>
+        <input
+          id="key-name"
+          appInput
+          formControlName="name"
+          placeholder="Production key"
+          [invalid]="form.controls.name.touched && form.controls.name.invalid"
+          [attr.aria-describedby]="
+            form.controls.name.touched && form.controls.name.invalid
+              ? 'key-name-error'
+              : null
+          "
+        />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <p id="key-name-error" class="mt-1.5 text-sm text-error" role="alert">
+            Indiquez un nom (60 caractères maximum).
+          </p>
+        }
+      </div>
+
+      <div>
+        <app-label htmlFor="key-scope">Scope</app-label>
+        <div class="relative">
+          <select id="key-scope" appSelect formControlName="scope">
+            @for (scope of scopes; track scope.value) {
+              <option [value]="scope.value">{{ scope.label }}</option>
+            }
+          </select>
+          <lucide-icon
+            [img]="ChevronDownIcon"
+            class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+
+      <div>
+        <app-label htmlFor="key-permission">Permission</app-label>
+        <div class="relative">
+          <select id="key-permission" appSelect formControlName="permission">
+            <option value="Read & Write">Read &amp; Write</option>
+            <option value="Read only">Read only</option>
+          </select>
+          <lucide-icon
+            [img]="ChevronDownIcon"
+            class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+
+      <p class="rounded-lg border border-[#ffd9cf] bg-primary-soft px-3 py-2.5 text-[13px] text-foreground">
+        {{ createMessage }}
+      </p>
+    </form>
+
+    <div drawerFooter class="contents">
+      <app-button variant="secondary" (click)="createOpen.set(false)">
+        Cancel
+      </app-button>
+      <app-button (click)="submitCreate()">Create key</app-button>
+    </div>
+  </app-drawer>
+
+  <app-confirm-dialog
+    [open]="pendingDelete() !== null"
+    (close)="pendingDelete.set(null)"
+    (confirm)="confirmDelete()"
+    title="Retirer cette clé de l’aperçu ?"
+    [description]="deleteDescription()"
+    confirmLabel="Retirer de l’affichage"
+    cancelLabel="Annuler"
+    [destructive]="true"
+  />
+</div>

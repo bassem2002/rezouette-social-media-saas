@@ -1,0 +1,181 @@
+<div class="space-y-5">
+  <app-page-header
+    title="Connections"
+    description="Manage profiles and platform integrations"
+  >
+    <div pageActions class="flex flex-wrap items-center gap-2">
+      <app-button size="sm" className="rounded-md" (click)="chooserOpen.set(true)">
+        <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+        New Connection
+      </app-button>
+      <!-- Maquette : la notion de profil n'existe pas côté serveur. -->
+      <app-button
+        variant="secondary"
+        size="sm"
+        className="rounded-md"
+        (click)="notifyComingSoon()"
+      >
+        New Profile
+      </app-button>
+    </div>
+  </app-page-header>
+
+  <!-- Filtres — tous locaux : aucun n'est transmis au backend. -->
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center gap-3">
+      <h2 class="text-lg font-semibold tracking-tight text-foreground">
+        Platforms
+      </h2>
+      <div class="relative">
+        <label for="profile-filter" class="sr-only">Profil</label>
+        <select
+          id="profile-filter"
+          appSelect
+          className="h-9 w-[184px] rounded-md text-[13px]"
+          [value]="profileFilter()"
+          (change)="profileFilter.set($any($event.target).value)"
+        >
+          <option value="all">All profiles</option>
+          @for (profile of profiles; track profile.id) {
+            <option [value]="profile.id">{{ profile.label }}</option>
+          }
+        </select>
+        <lucide-icon
+          [img]="ChevronDownIcon"
+          class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+          aria-hidden="true"
+        />
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="relative">
+        <label for="platform-filter" class="sr-only">Plateforme</label>
+        <select
+          id="platform-filter"
+          appSelect
+          className="h-9 w-[152px] rounded-md text-[13px]"
+          [value]="platformFilter()"
+          (change)="onPlatformFilter($any($event.target).value)"
+        >
+          <option value="all">All platforms</option>
+          @for (platform of platformFilters; track platform) {
+            <option [value]="platform">{{ platformLabels[platform] }}</option>
+          }
+        </select>
+        <lucide-icon
+          [img]="ChevronDownIcon"
+          class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+          aria-hidden="true"
+        />
+      </div>
+
+      <div class="relative">
+        <label for="status-filter" class="sr-only">Statut</label>
+        <select
+          id="status-filter"
+          appSelect
+          className="h-9 w-[168px] rounded-md text-[13px]"
+          [value]="statusFilter()"
+          (change)="onStatusFilter($any($event.target).value)"
+        >
+          <option value="all">All statuses</option>
+          @for (status of statusFilters; track status.value) {
+            <option [value]="status.value">{{ status.label }}</option>
+          }
+        </select>
+        <lucide-icon
+          [img]="ChevronDownIcon"
+          class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+          aria-hidden="true"
+        />
+      </div>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      <app-skeleton-card />
+      <app-skeleton-card />
+      <app-skeleton-card />
+    </div>
+  } @else if (accountsQuery.isError()) {
+    <app-error-state (retry)="accountsQuery.refetch()" />
+  } @else {
+    @if (youtubeFailed()) {
+      <!-- L'échec YouTube est isolé : il ne doit pas masquer les connexions
+           des autres réseaux, qui sont chargées correctement. -->
+      <app-error-state
+        title="Chaînes YouTube indisponibles"
+        description="Les chaînes YouTube n’ont pas pu être chargées. Les autres connexions restent affichées."
+        (retry)="youtubeAccountsQuery.refetch()"
+      />
+    }
+
+    @if (hasResults()) {
+      <div class="rz-connections-grid">
+        @for (connection of connections(); track connection.key) {
+          <app-connection-card
+            [view]="connection"
+            [busy]="redirecting()"
+            (action)="pending.set(connection.platform)"
+          />
+        }
+      </div>
+    } @else {
+      <div
+        class="rounded-xl border border-dashed border-border bg-surface p-10 text-center"
+      >
+        <p class="text-sm font-medium text-foreground">
+          Aucune connexion ne correspond à ces filtres
+        </p>
+        <button
+          type="button"
+          (click)="resetFilters()"
+          class="mt-2 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        >
+          Réinitialiser les filtres
+        </button>
+      </div>
+    }
+  }
+
+  <!-- Choix de la plateforme à connecter : réutilise les flux OAuth existants,
+       aucune connexion fictive n'est créée. -->
+  <app-dialog
+    [open]="chooserOpen()"
+    title="Nouvelle connexion"
+    description="Choisissez le réseau social à connecter."
+    (close)="chooserOpen.set(false)"
+  >
+    <ul class="space-y-1.5">
+      @for (platform of platformFilters; track platform) {
+        <li>
+          <button
+            type="button"
+            (click)="choosePlatform(platform)"
+            class="flex w-full items-center gap-3 rounded-md border border-border bg-surface px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors duration-150 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <app-platform-icon [platform]="platform" className="size-4 text-muted" />
+            {{ platformLabels[platform] }}
+          </button>
+        </li>
+      }
+    </ul>
+    <div dialogFooter class="contents">
+      <app-button variant="secondary" (click)="chooserOpen.set(false)">
+        Annuler
+      </app-button>
+    </div>
+  </app-dialog>
+
+  <app-confirm-dialog
+    [open]="pending() !== null"
+    (close)="pending.set(null)"
+    (confirm)="confirmReconnect()"
+    [title]="dialogCopy().title"
+    [description]="dialogCopy().description"
+    [confirmLabel]="dialogCopy().confirmLabel"
+    cancelLabel="Annuler"
+  />
+</div>

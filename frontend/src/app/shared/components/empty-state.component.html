@@ -1,0 +1,12 @@
+<app-card [className]="cardClasses()">
+  <span class="flex size-12 items-center justify-center rounded-xl bg-muted-soft text-muted">
+    <lucide-icon [img]="icon()" class="size-6" />
+  </span>
+  <div>
+    <p class="text-base font-semibold text-foreground">{{ title() }}</p>
+    @if (description()) {
+      <p class="mx-auto mt-1 max-w-sm text-sm text-muted">{{ description() }}</p>
+    }
+  </div>
+  <ng-content select="[emptyAction]" />
+</app-card>

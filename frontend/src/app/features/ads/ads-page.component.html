@@ -1,0 +1,175 @@
+<div class="space-y-5">
+  <div class="flex gap-1 border-b border-border" role="tablist" aria-label="Publicité">
+    @for (item of tabs; track item.id) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="tab() === item.id"
+        (click)="setTab(item.id)"
+        class="-mb-px border-b-2 px-3 py-2.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        [class]="
+          tab() === item.id
+            ? 'border-foreground text-foreground'
+            : 'border-transparent text-muted hover:text-foreground'
+        "
+      >
+        {{ item.label }}
+      </button>
+    }
+  </div>
+
+  @if (tab() === 'campaigns') {
+    <app-page-header title="Ads" description="Manage boosted post ads">
+      <app-preview-badge titleBadge />
+      <div pageActions class="flex flex-wrap items-center gap-2">
+        <app-button size="sm" className="rounded-md" (click)="notify()">
+          <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+          Create Ad
+        </app-button>
+        <app-button
+          variant="secondary"
+          size="sm"
+          className="rounded-md"
+          (click)="notify()"
+        >
+          <lucide-icon buttonIcon [img]="BoostIcon" class="size-4" />
+          Boost Post
+        </app-button>
+      </div>
+    </app-page-header>
+
+    <app-frontend-preview-notice />
+
+    <div class="flex flex-wrap items-center gap-2">
+      <app-filter-select
+        controlId="ads-profile"
+        label="Profil"
+        [options]="filters.profiles"
+        [value]="profile()"
+        (valueChange)="profile.set($event)"
+        className="w-[136px]"
+      />
+      <app-filter-select
+        controlId="ads-ad"
+        label="Publicité"
+        [options]="filters.ads"
+        [value]="ad()"
+        (valueChange)="ad.set($event)"
+        className="w-[120px]"
+      />
+      <app-filter-select
+        controlId="ads-platform"
+        label="Plateforme"
+        [options]="filters.platforms"
+        [value]="platform()"
+        (valueChange)="platform.set($event)"
+        className="w-[148px]"
+      />
+      <app-filter-select
+        controlId="ads-account"
+        label="Compte"
+        [options]="filters.accounts"
+        [value]="account()"
+        (valueChange)="account.set($event)"
+        className="w-[140px]"
+      />
+      <app-filter-select
+        controlId="ads-status"
+        label="Statut"
+        [options]="filters.statuses"
+        [value]="status()"
+        (valueChange)="status.set($event)"
+        className="w-[140px]"
+      />
+      <app-filter-select
+        controlId="ads-range"
+        label="Période"
+        [options]="filters.ranges"
+        [value]="range()"
+        (valueChange)="range.set($event)"
+        className="w-[148px]"
+      />
+      <app-filter-select
+        controlId="ads-sort"
+        label="Tri"
+        [options]="filters.sort"
+        [value]="sort()"
+        (valueChange)="sort.set($event)"
+        className="w-[140px]"
+      />
+      <button
+        type="button"
+        (click)="clearFilters()"
+        class="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm text-muted transition-colors duration-150 hover:bg-muted-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <lucide-icon [img]="ClearIcon" class="size-3.5" aria-hidden="true" />
+        Clear filters
+      </button>
+    </div>
+
+    @if (!hasCampaigns()) {
+      <div class="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-surface px-6 py-20 text-center">
+        <span class="flex size-14 items-center justify-center rounded-full bg-card text-subtle">
+          <lucide-icon [img]="AdsIcon" class="size-6" aria-hidden="true" />
+        </span>
+        <p class="text-xl font-semibold text-foreground">No ads yet</p>
+        <p class="mx-auto max-w-md text-sm text-muted">
+          Boost a published post or create a standalone ad to get started
+        </p>
+      </div>
+    }
+  }
+
+  @if (tab() === 'audiences') {
+    <app-page-header title="Audiences" description="Reusable targeting audiences">
+      <app-preview-badge titleBadge />
+      <div pageActions class="flex items-center gap-2">
+        <app-button size="sm" className="rounded-md" (click)="notify()">
+          <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+          New audience
+        </app-button>
+      </div>
+    </app-page-header>
+
+    <app-frontend-preview-notice />
+
+    @if (!hasAudiences()) {
+      <div class="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-surface px-6 py-20 text-center">
+        <span class="flex size-14 items-center justify-center rounded-full bg-card text-subtle">
+          <lucide-icon [img]="AudienceIcon" class="size-6" aria-hidden="true" />
+        </span>
+        <p class="text-xl font-semibold text-foreground">No audiences yet</p>
+        <p class="mx-auto max-w-md text-sm text-muted">
+          Les audiences seront disponibles avec le service publicitaire.
+        </p>
+      </div>
+    }
+  }
+
+  @if (tab() === 'lead-forms') {
+    <app-page-header title="Lead Forms" description="Collect leads from your ads">
+      <app-preview-badge titleBadge />
+      <div pageActions class="flex items-center gap-2">
+        <app-button size="sm" className="rounded-md" (click)="notify()">
+          <lucide-icon buttonIcon [img]="PlusIcon" class="size-4" />
+          New lead form
+        </app-button>
+      </div>
+    </app-page-header>
+
+    <app-frontend-preview-notice />
+
+    @if (!hasLeadForms()) {
+      <div class="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-surface px-6 py-20 text-center">
+        <span class="flex size-14 items-center justify-center rounded-full bg-card text-subtle">
+          <lucide-icon [img]="AdsIcon" class="size-6" aria-hidden="true" />
+        </span>
+        <p class="text-xl font-semibold text-foreground">No lead forms yet</p>
+        <p class="mx-auto max-w-md text-sm text-muted">
+          Aucun formulaire n’est collecté tant que le service publicitaire n’est
+          pas connecté.
+        </p>
+      </div>
+    }
+  }
+</div>
