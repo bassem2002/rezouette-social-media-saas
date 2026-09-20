@@ -4,24 +4,25 @@
 
 **Rezouette** is a Full-Stack SaaS project designed to centralize social media account connections, content publishing, scheduling, publication monitoring and analytics from a single interface.
 
-The platform currently supports the Meta ecosystem and provides extensible integrations for TikTok, LinkedIn and YouTube.
+The platform integrates the Meta ecosystem and provides extensible implementations for TikTok, LinkedIn and YouTube.
 
 ---
 
 ## 🎯 Project Objectives
 
-Rezouette aims to simplify multi-platform social media management by providing a unified workspace to:
+Rezouette provides a unified workspace to:
 
 - Connect social media accounts through OAuth
-- Publish content from a single interface
-- Publish to multiple platforms
+- Manage multiple social platforms from one interface
+- Publish content immediately
 - Schedule future publications
 - Manage images and videos
-- Monitor publication status
-- Track publication history
+- Track publication status
+- Monitor publishing queues
+- Browse publication history
 - Monitor account token status
 - Visualize publishing activity and analytics
-- Provide an extensible architecture for additional social networks
+- Support additional social-media providers through an extensible architecture
 
 ---
 
@@ -33,50 +34,48 @@ Rezouette aims to simplify multi-platform social media management by providing a
 | **Instagram Business** | OAuth, image/caption publishing, history, scheduling | ✅ Operational |
 | **TikTok** | OAuth + PKCE, video publishing, token refresh, scheduling | 🚧 Implemented — real-world validation pending |
 | **LinkedIn** | OAuth/OIDC, text/link/image publishing, token monitoring, scheduling | 🧪 Implemented and tested with mocks |
-| **YouTube** | OAuth + PKCE, multi-channel support, resumable video upload, scheduling and processing reconciliation | 🧪 Implemented and tested with mocks |
+| **YouTube** | OAuth + PKCE, multi-channel support, resumable upload and scheduling | 🧪 Implemented and tested with mocks |
 
-> LinkedIn and YouTube publishing are disabled by default until real provider credentials and production validation are completed.
+> Some external integrations require real provider credentials, application approval and production validation before they can be enabled in a production environment.
 
 ---
 
-## 🚀 Main Features
+## 🚀 Core Features
 
 ### 🔗 Social Account Connections
 
-Rezouette provides OAuth-based connections for supported social networks.
+Rezouette provides OAuth-based social account connections and centralized account management.
 
-The platform manages:
+The platform handles:
 
 - Account connection
 - OAuth callbacks
 - Connected account information
-- Token status
+- Provider-specific authentication flows
+- Token lifecycle monitoring
 - Reconnection requirements
-- Multiple provider-specific authentication flows
 
 ---
 
 ### ✍️ Multi-Platform Publishing
 
-Content can be prepared from one interface and sent to supported social platforms.
+Users can prepare content from a single interface and choose one or several target platforms.
 
-The backend isolates provider-specific implementations so that failures on one platform do not necessarily prevent the other selected platforms from being processed.
-
-Supported content depends on the selected provider:
+Supported content depends on the provider:
 
 - Text
 - Images
 - Videos
 - Links
-- Platform-specific publication options
+- Platform-specific publishing options
+
+The backend isolates provider-specific implementations so that an error on one platform does not necessarily prevent the other selected platforms from being processed.
 
 ---
 
 ### 📅 Scheduled Publishing
 
-Publications can be scheduled for later execution.
-
-The scheduling lifecycle includes:
+Posts can be published immediately or scheduled for future execution.
 
 ```text
 SCHEDULED
@@ -86,41 +85,35 @@ PROCESSING
 PUBLISHED / FAILED / CANCELLED
 ```
 
-A background scheduler detects due publications and delegates them to the corresponding publishing workflow.
+Background schedulers detect due publications and route them through the corresponding provider workflow.
 
 ---
 
 ### 🗓️ Publication Calendar
 
-The Angular frontend provides a calendar view for scheduled publications.
+The Angular interface provides a monthly calendar to visualize scheduled publications.
 
 Users can:
 
 - View upcoming posts
-- Inspect publication details
-- Follow scheduled content
+- Identify target platforms
+- Inspect publication status
+- Follow scheduled activity
 - Cancel eligible scheduled publications
-
----
-
-### 🖼️ Media Management
-
-Rezouette supports local media uploads for social publications.
-
-Supported media include:
-
-- Images
-- Videos
-
-The backend validates uploaded media before storing and exposing them to publishing workflows.
-
-YouTube publishing uses controlled local media access rather than downloading arbitrary remote URLs.
 
 ---
 
 ### 📚 Publication History
 
-Every publication attempt can be persisted with its status.
+Rezouette keeps a persistent history of publication attempts.
+
+Tracked information includes:
+
+- Publication date
+- Target platform
+- Publication status
+- Provider publication identifier
+- Normalized error information
 
 Typical publication states include:
 
@@ -130,13 +123,11 @@ PUBLISHED
 FAILED
 ```
 
-The platform keeps provider-specific publication information and normalized error diagnostics.
-
 ---
 
 ### 🔄 Token Lifecycle Management
 
-The platform monitors the lifecycle of connected social account tokens.
+The application monitors the state of connected provider tokens.
 
 Possible states include:
 
@@ -147,33 +138,36 @@ EXPIRED
 RECONNECT_REQUIRED
 ```
 
-Token handling is adapted to the behavior of each provider.
+Token handling is adapted to the behavior of each social-media provider.
 
 ---
 
 ### 📊 Analytics
 
-Rezouette provides an analytics API and dashboard based on local publication history.
+Rezouette provides a dashboard based on local publication history.
 
 Available information includes:
 
-- Publication KPIs
-- Publications by platform
+- Total publications
+- Successful publications
+- Failed publications
+- Scheduled publications
+- Publishing success rate
+- Distribution by platform
 - Error distribution
-- Daily publishing activity
-- Scheduled publication status
+- Daily publication activity
 
-> Current analytics are derived from Rezouette's own publication history. They are not real-time views, likes or comments retrieved from every social network.
+> Current analytics are based on Rezouette's own publication history and are not presented as real-time engagement metrics from every provider.
 
 ---
 
 ### 🧾 Swagger / OpenAPI
 
-The backend exposes interactive API documentation using Swagger / OpenAPI.
+The backend exposes interactive API documentation with Swagger / OpenAPI.
 
-This makes it easier to:
+It can be used to:
 
-- Explore available endpoints
+- Explore REST endpoints
 - Inspect request DTOs
 - Understand provider-specific APIs
 - Test backend routes during development
@@ -184,36 +178,25 @@ This makes it easier to:
 
 ### Backend
 
-`NestJS 11`  
-`TypeScript`  
-`Prisma ORM`  
-`PostgreSQL`  
+`NestJS 11` • `TypeScript` • `Prisma ORM` • `PostgreSQL`
+
 `Swagger / OpenAPI`
 
-### Authentication & Integrations
+### OAuth & Integrations
 
-`OAuth 2.0`  
-`PKCE S256`  
-`OpenID Connect`  
-`HMAC-SHA256`  
-`JWKS / JOSE`
+`OAuth 2.0` • `PKCE S256` • `OpenID Connect`
+
+`HMAC-SHA256` • `JWKS / JOSE`
 
 ### Frontend
 
-`Angular 21`  
-`TypeScript`  
-`RxJS`  
-`Angular Signals`  
-`TanStack Query`  
-`Reactive Forms`  
-`TailwindCSS`
+`Angular 21` • `TypeScript` • `RxJS`
+
+`Angular Signals` • `TanStack Query` • `Reactive Forms` • `TailwindCSS`
 
 ### Testing & Development
 
-`Jest`  
-`ts-jest`  
-`Git`  
-`GitHub`
+`Jest` • `ts-jest` • `Git` • `GitHub`
 
 ---
 
@@ -221,7 +204,7 @@ This makes it easier to:
 
 The Rezouette backend follows **Clean Architecture** principles.
 
-The objective is to separate business logic from frameworks, databases and external social-media APIs.
+The goal is to keep business rules independent from frameworks, databases and external social-media providers.
 
 ```text
 ┌───────────────────────────────────────────────┐
@@ -265,11 +248,9 @@ The objective is to separate business logic from frameworks, databases and exter
                              └──────────────────┘
 ```
 
-### Architecture Layers
+### Domain
 
-#### Domain
-
-Contains the core business concepts and does not depend on NestJS or external providers.
+Contains the core business concepts without depending on NestJS or external APIs.
 
 Examples:
 
@@ -280,13 +261,11 @@ Examples:
 - Repository interfaces
 - Business enums
 
-#### Application
+### Application
 
-Contains application workflows and use cases.
+Contains the main application workflows:
 
-Examples:
-
-- Connect social account
+- Connect social accounts
 - Publish content
 - Schedule publications
 - Retrieve token status
@@ -294,11 +273,9 @@ Examples:
 - Generate analytics
 - Reconcile asynchronous publications
 
-#### Infrastructure
+### Infrastructure
 
-Contains technical implementations.
-
-Examples:
+Contains technical implementations:
 
 - Prisma repositories
 - PostgreSQL persistence
@@ -310,27 +287,23 @@ Examples:
 - Local media storage
 - Background schedulers
 
-#### Presentation
+### Presentation
 
-Contains the HTTP layer.
-
-Examples:
+Contains the HTTP-facing layer:
 
 - NestJS controllers
 - DTO validation
 - Swagger documentation
 - Presenters
-- HTTP-specific error handling
+- HTTP error handling
 
 ---
 
 ## 🔐 OAuth & Security Engineering
 
-The project contains several security-oriented mechanisms depending on the social provider.
-
 ### OAuth State Protection
 
-OAuth flows can use signed state values based on:
+OAuth flows use security mechanisms such as signed state values based on:
 
 ```text
 HMAC-SHA256
@@ -340,15 +313,13 @@ with expiration and provider validation.
 
 ### PKCE
 
-PKCE S256 is used in supported OAuth integrations.
-
-The architecture supports:
+Supported integrations implement **PKCE S256**.
 
 ```text
 code_verifier
-        ↓
-SHA-256
-        ↓
+      ↓
+   SHA-256
+      ↓
 code_challenge
 ```
 
@@ -358,73 +329,35 @@ OAuth nonce and PKCE information are designed for one-time consumption with expi
 
 ### Controlled Media Access
 
-The YouTube media pipeline only accepts media managed by the application.
-
-This helps prevent arbitrary remote resource access in the publishing workflow.
+The YouTube media pipeline only accepts media managed by the application instead of arbitrary remote resources.
 
 ---
 
-## 📺 YouTube Integration
+## 🔵 Meta Integration
 
-The YouTube integration includes substantial backend and Angular implementation.
+### Facebook Pages
 
-Implemented components include:
+Implemented capabilities include:
 
-- OAuth 2.0
-- PKCE S256
-- Multi-channel account support
-- Token refresh workflow
-- Resumable video uploads
-- Chunk-based file reading
-- Immediate publication workflow
-- Scheduled publication workflow
-- Processing reconciliation
+- OAuth connection
+- Page discovery
+- Text publication
+- Image publication
+- Scheduled publications
 - Publication history
-- Angular integration
 
-### Current YouTube Status
+### Instagram Business
 
-```text
-Implementation:          ✅
-Unit tests with mocks:   ✅
-Real Google OAuth:       ❌ Not yet validated
-Real video upload:       ❌ Not yet validated
-Production validation:   ❌ Pending
-```
+Implemented capabilities include:
 
-YouTube publishing remains disabled by default until provider credentials and real validation are completed.
-
----
-
-## 💼 LinkedIn Integration
-
-The LinkedIn member-profile integration includes:
-
-- OAuth 2.0
-- OpenID Connect
-- Signed OAuth state
-- JWKS-based ID token verification
-- Member account persistence
-- Token lifecycle monitoring
-- Text publications
-- Link publications
-- Single-image publications
-- Scheduled text/image publications
+- Account discovery
+- Media container creation
+- Image publication
+- Caption support
+- Scheduled publications
 - Publication history
-- Error normalization
-- Angular integration
 
-### Current LinkedIn Status
-
-```text
-Implementation:             ✅
-Unit tests with mocks:      ✅
-Real LinkedIn OAuth:        ❌ Not yet validated
-Real publication:           ❌ Not yet validated
-Publishing enabled default: ❌ No
-```
-
-The publishing adapter is deliberately disabled by default until real API validation is completed.
+These represent the currently validated external social-media flows of the project.
 
 ---
 
@@ -436,45 +369,75 @@ The TikTok implementation includes:
 - PKCE
 - Video Direct Post workflow
 - Refresh-token handling
-- Token status
+- Token status monitoring
 - Scheduled publications
 - Publication status monitoring
 - Angular integration
 
-### Current TikTok Status
+### Status
 
 ```text
 Implementation:        ✅
 Real-world validation: 🚧 Pending
 ```
 
-Real validation requires appropriate TikTok credentials and application approval.
+---
+
+## 💼 LinkedIn Integration
+
+Implemented components include:
+
+- OAuth 2.0
+- OpenID Connect
+- Signed OAuth state
+- JWKS-based ID-token verification
+- Member account persistence
+- Token lifecycle monitoring
+- Text publications
+- Link publications
+- Single-image publications
+- Scheduled publications
+- Publication history
+- Error normalization
+- Angular integration
+
+### Status
+
+```text
+Implementation:             ✅
+Unit tests with mocks:      ✅
+Real LinkedIn OAuth:        ❌ Not yet validated
+Real publication:           ❌ Not yet validated
+Publishing enabled default: ❌ No
+```
 
 ---
 
-## 🔵 Meta Integration
+## 📺 YouTube Integration
 
-The Meta integration currently covers:
+The YouTube implementation includes:
 
-### Facebook Pages
-
-- OAuth connection
-- Page discovery
-- Text publication
-- Image publication
-- Scheduled publications
+- OAuth 2.0
+- PKCE S256
+- Multi-channel account support
+- Token refresh workflow
+- Resumable video upload architecture
+- Chunk-based file reading
+- Immediate publishing workflow
+- Scheduled publishing workflow
+- Processing reconciliation
 - Publication history
+- Angular integration
 
-### Instagram Business
+### Status
 
-- Account discovery
-- Media container creation
-- Image publication
-- Caption support
-- Scheduled publications
-- Publication history
-
-These flows represent the currently validated external social-media integration of the project.
+```text
+Implementation:          ✅
+Unit tests with mocks:   ✅
+Real Google OAuth:       ❌ Not yet validated
+Real video upload:       ❌ Not yet validated
+Production validation:   ❌ Pending
+```
 
 ---
 
@@ -488,12 +451,12 @@ The backend currently contains:
 0 failing tests
 ```
 
-Backend tests currently focus on unit-level behavior and mocked external dependencies.
+Backend tests focus on unit-level behavior and mocked external dependencies.
 
-They cover areas such as:
+Covered areas include:
 
 - YouTube OAuth
-- YouTube resumable uploads
+- YouTube resumable upload logic
 - YouTube processing reconciliation
 - LinkedIn OAuth/OIDC
 - OAuth state validation
@@ -505,9 +468,7 @@ They cover areas such as:
 - Error mapping
 - Analytics
 
-### Verified Commands
-
-The documented validation includes successful execution of:
+### Verified Project Checks
 
 ```text
 Prisma client generation     ✅
@@ -517,11 +478,11 @@ Backend Jest tests           ✅
 Angular production build     ✅
 ```
 
-### Frontend Tests
+### Frontend Testing
 
 The current Angular project does not yet include an automated frontend test harness.
 
-The Angular production build validates TypeScript and templates, but automated behavioral frontend tests remain to be added.
+The production build validates TypeScript and Angular templates, while automated behavioral frontend tests remain part of future work.
 
 ---
 
@@ -535,9 +496,9 @@ PostgreSQL
 Prisma ORM
 ```
 
-The project uses versioned Prisma migrations for database schema evolution.
+Database evolution is managed through versioned Prisma migrations.
 
-The current documented project state contains:
+Current documented state:
 
 ```text
 10 Prisma migrations
@@ -558,7 +519,7 @@ Main persisted concepts include:
 
 The active frontend is built with **Angular 21**.
 
-The application uses a feature-oriented structure combining:
+Its feature-oriented structure combines:
 
 ```text
 core/
@@ -567,23 +528,106 @@ layout/
 features/
 ```
 
-The frontend includes pages for:
+Main interfaces include:
 
 - Dashboard
-- Publication composer
 - Connected accounts
+- Publication composer
 - Publication calendar
 - Publication history
 - Analytics
 - Settings
 
-Angular Signals and TanStack Query are used for frontend state and server-state management.
+Angular Signals and TanStack Query are used for frontend and server-state management.
+
+---
+
+# 🖼️ Application Preview
+
+## 📊 Dashboard
+
+The main dashboard provides an overview of publication activity and connected social platforms.
+
+![Rezouette Dashboard](images/dashboard.png)
+
+---
+
+## 🔗 Social Media Connections
+
+Connected accounts can be managed from a centralized interface.
+
+The interface displays Facebook, Instagram, TikTok, LinkedIn and YouTube account states and reconnection requirements.
+
+![Rezouette Social Connections](images/connections.png)
+
+---
+
+## ✍️ Multi-Platform Publication
+
+The publication composer allows content creation from one interface.
+
+Users can select the target platforms, prepare provider-specific content, upload media and choose between immediate or scheduled publishing.
+
+![Rezouette Publication Composer](images/publication.png)
+
+---
+
+## 📅 Publication Calendar
+
+Scheduled publications are visualized through a monthly calendar.
+
+Platform indicators make it possible to quickly identify which social networks are targeted by each publication.
+
+![Rezouette Publication Calendar](images/calendar.png)
+
+---
+
+## 📈 Analytics Dashboard
+
+The analytics interface provides publication KPIs, platform distribution, scheduled-post statistics and publishing error analysis.
+
+![Rezouette Analytics](images/analytics.png)
+
+---
+
+## 📚 Publication History
+
+The history interface tracks previous publication attempts with:
+
+- Platform
+- Publication date
+- Status
+- Provider publication ID
+- Error information
+
+![Rezouette Publication History](images/history.png)
+
+> The screenshots represent the development/demo environment. Some provider integrations shown in the interface still require production credentials and real-world validation.
+
+---
+
+## 🎥 Demo
+
+A complete demo video of the Rezouette platform is available.
+
+The demonstration presents the main application flows, including:
+
+- Social account management
+- Multi-platform publishing
+- Scheduling
+- Publication calendar
+- Publication history
+- Analytics
+
+<!-- Replace YOUR_DEMO_LINK when the video is uploaded or hosted -->
+
+<!--
+▶️ **[Watch the Rezouette Demo](YOUR_DEMO_LINK)**
+-->
 
 ---
 
 ## 📁 Public Repository Structure
-
-The public portfolio repository is organized around the active backend and Angular frontend:
 
 ```text
 rezouette-social-media-saas/
@@ -595,7 +639,12 @@ rezouette-social-media-saas/
 │   └── Angular application
 │
 ├── images/
-│   └── Application screenshots
+│   ├── dashboard.png
+│   ├── connections.png
+│   ├── publication.png
+│   ├── calendar.png
+│   ├── analytics.png
+│   └── history.png
 │
 ├── README.md
 │
@@ -604,65 +653,25 @@ rezouette-social-media-saas/
 
 ---
 
-## 🖼️ Application Preview
-
-Application screenshots will be added to this section.
-
-<!-- Example:
-
-### Dashboard
-
-![Dashboard](images/dashboard.jpg)
-
-### Publication Composer
-
-![Publication Composer](images/publication.jpg)
-
-### Connected Accounts
-
-![Connected Accounts](images/accounts.jpg)
-
-### Publication Calendar
-
-![Calendar](images/calendar.jpg)
-
-### Analytics
-
-![Analytics](images/analytics.jpg)
-
--->
-
----
-
-## 🎥 Demo
-
-A complete demonstration of the platform will be added here.
-
-<!--
-▶️ [Watch the Rezouette Demo](YOUR_DEMO_LINK)
--->
-
----
-
 ## 👨‍💻 Project Context
 
-Rezouette is a personal software engineering project focused on the design of a scalable Full-Stack SaaS architecture and the integration of external APIs.
+Rezouette is a personal software-engineering project focused on designing a scalable Full-Stack SaaS architecture and integrating external APIs.
 
 The project allowed me to work on:
 
 - Full-Stack application architecture
 - Clean Architecture
 - REST API development
-- OAuth 2.0 flows
-- PKCE authentication
+- OAuth 2.0
+- PKCE
 - OpenID Connect
-- Social network API integrations
+- Social-network API integrations
 - Background schedulers
 - Asynchronous processing
 - PostgreSQL data modeling
 - Prisma migrations
-- Media upload pipelines
-- Error normalization
+- Media-upload pipelines
+- API error normalization
 - API resilience
 - Frontend / backend integration
 - Automated backend testing
@@ -678,13 +687,13 @@ Current limitations include:
 - Application-level JWT authentication is not yet implemented
 - A demonstration user identifier is currently used
 - Multi-workspace / RBAC support is not yet implemented
+- TikTok still requires real-world API validation
 - LinkedIn requires real provider validation
 - YouTube requires real provider validation
-- TikTok requires real-world API validation
 - OAuth temporary stores currently rely on process memory
-- Multi-instance deployment is not yet supported for those temporary stores
+- Multi-instance deployment is not yet supported for these temporary stores
 - Tokens are not yet encrypted at rest
-- Angular automated tests are not yet configured
+- Automated Angular tests are not yet configured
 
 ---
 
@@ -709,22 +718,22 @@ Planned improvements include:
 ## 📌 Development Status
 
 ```text
-Backend Architecture       ✅
-Angular Frontend           ✅
-PostgreSQL / Prisma        ✅
-Facebook Integration       ✅
-Instagram Integration      ✅
-Scheduling                 ✅
-Publication History        ✅
-Local Analytics            ✅
-Backend Automated Tests    ✅
+Backend Architecture        ✅
+Angular Frontend            ✅
+PostgreSQL / Prisma         ✅
+Facebook Integration        ✅
+Instagram Integration       ✅
+Scheduling                  ✅
+Publication History         ✅
+Local Analytics             ✅
+Backend Automated Tests     ✅
 
-TikTok Real Validation     🚧
-LinkedIn Real Validation   🚧
-YouTube Real Validation    🚧
+TikTok Real Validation      🚧
+LinkedIn Real Validation    🚧
+YouTube Real Validation     🚧
 
 Application Authentication ⏳
-Production Deployment      ⏳
+Production Deployment       ⏳
 ```
 
 ---
@@ -740,7 +749,7 @@ Production Deployment      ⏳
 
 ## 📄 Disclaimer
 
-This repository is a portfolio-oriented public version of the project.
+This repository is a **portfolio-oriented public version** of the project.
 
 External social-media integrations depend on third-party APIs, credentials, permissions and provider approval.
 
