@@ -653,6 +653,65 @@ rezouette-social-media-saas/
 
 ---
 
+## 🚀 Installation
+
+### Prerequisites
+
+- Node.js 20 or later and npm
+- PostgreSQL 15 or later
+- OAuth application credentials only for the social platforms you want to test
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/bassem2002/rezouette-social-media-saas.git
+cd rezouette-social-media-saas
+```
+
+### 2. Configure and start the backend
+
+Create a PostgreSQL database named `rezouette`, then run:
+
+```bash
+cd backend
+npm install
+cp .env.example .env
+```
+
+Update `DATABASE_URL`, `OAUTH_STATE_SECRET`, and any provider credentials required for your local tests in `backend/.env`. Keep unused publishing integrations disabled.
+
+Apply the Prisma migrations, generate the client, and start NestJS:
+
+```bash
+npx prisma migrate deploy
+npx prisma generate
+npm run start:dev
+```
+
+The backend runs by default at `http://localhost:3000`.
+
+### 3. Start the frontend
+
+In a second terminal:
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+Open `http://localhost:4200`. The default `.env.example` already allows this frontend URL through `FRONTEND_URL`.
+
+### 4. Optional development data and checks
+
+```bash
+cd backend
+npm run seed:dev
+npm test
+```
+
+Never commit the completed `.env` file or real OAuth, Cloudinary, database, or API credentials.
+
 ## 👨‍💻 Project Context
 
 Rezouette is a personal software-engineering project focused on designing a scalable Full-Stack SaaS architecture and integrating external APIs.
