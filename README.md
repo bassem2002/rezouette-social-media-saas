@@ -1,5 +1,15 @@
 # Rezouette — Social Media Management SaaS 🚀
 
+<p align="center">
+  <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
+  <img src="https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white" alt="Angular" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/OAuth%202.0-PKCE%20%7C%20Security-0F766E?style=for-the-badge" alt="OAuth 2.0" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-14B8A6?style=for-the-badge" alt="MIT License" /></a>
+</p>
+
+<p align="center"><a href="#-core-features">Features</a> · <a href="#️-architecture">Architecture</a> · <a href="#-installation">Installation</a> · <a href="#-application-preview">Preview</a></p>
+
 > Multi-platform social media management platform built with NestJS, Angular, Prisma and PostgreSQL.
 
 **Rezouette** is a Full-Stack SaaS project designed to centralize social media account connections, content publishing, scheduling, publication monitoring and analytics from a single interface.
